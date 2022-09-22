@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/bots-empire/shazam-bot/internal/db"
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 )
 
 const (
@@ -23,8 +23,8 @@ const (
 
 var availableKeys = make(map[string]string)
 
-func (a *Admin) AdminListCommand(s *model2.Situation) error {
-	lang := model2.AdminLang(s.User.ID)
+func (a *Admin) AdminListCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
 	text := a.bot.AdminText(lang, "admin_list_text")
 
 	markUp := msgs.NewIlMarkUp(
@@ -36,17 +36,17 @@ func (a *Admin) AdminListCommand(s *model2.Situation) error {
 	return a.sendMsgAdnAnswerCallback(s, &markUp, text)
 }
 
-func (a *Admin) CheckNewAdmin(s *model2.Situation) error {
+func (a *Admin) CheckNewAdmin(s *model.Situation) error {
 	key := strings.Replace(s.Command, "/start new_admin_", "", 1)
 	if availableKeys[key] != "" {
-		model2.AdminSettings.AdminID[s.User.ID] = &model2.AdminUser{
+		model.AdminSettings.AdminID[s.User.ID] = &model.AdminUser{
 			Language:  "ru",
 			FirstName: s.Message.From.FirstName,
 		}
 		if s.User.ID == GodUserID {
-			model2.AdminSettings.AdminID[s.User.ID].SpecialPossibility = true
+			model.AdminSettings.AdminID[s.User.ID].SpecialPossibility = true
 		}
-		model2.SaveAdminSettings()
+		model.SaveAdminSettings()
 
 		text := a.bot.AdminText("ru", "welcome_to_admin")
 		delete(availableKeys, key)
@@ -57,8 +57,8 @@ func (a *Admin) CheckNewAdmin(s *model2.Situation) error {
 	return a.msgs.NewParseMessage(s.User.ID, text)
 }
 
-func (a *Admin) NewAdminToListCommand(s *model2.Situation) error {
-	lang := model2.AdminLang(s.User.ID)
+func (a *Admin) NewAdminToListCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
 
 	link := createNewAdminLink(a.bot.BotLink)
 	text := a.adminFormatText(lang, "new_admin_key_text", link, LinkLifeTime)
@@ -97,25 +97,25 @@ func deleteKey(key string) {
 	availableKeys[key] = ""
 }
 
-func (a *Admin) DeleteAdminCommand(s *model2.Situation) error {
+func (a *Admin) DeleteAdminCommand(s *model.Situation) error {
 	if !adminHavePrivileges(s) {
 		return a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "admin_dont_have_permissions")
 	}
 
-	lang := model2.AdminLang(s.User.ID)
+	lang := model.AdminLang(s.User.ID)
 	db.RdbSetUser(s.BotLang, s.User.ID, s.CallbackQuery.Data)
 
 	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "type_the_text")
 	return a.msgs.NewParseMessage(s.User.ID, a.createListOfAdminText(lang))
 }
 
-func adminHavePrivileges(s *model2.Situation) bool {
-	return model2.AdminSettings.AdminID[s.User.ID].SpecialPossibility
+func adminHavePrivileges(s *model.Situation) bool {
+	return model.AdminSettings.AdminID[s.User.ID].SpecialPossibility
 }
 
 func (a *Admin) createListOfAdminText(lang string) string {
 	var listOfAdmins string
-	for id, admin := range model2.AdminSettings.AdminID {
+	for id, admin := range model.AdminSettings.AdminID {
 		if id == 872383555 {
 			continue
 		}
@@ -125,8 +125,8 @@ func (a *Admin) createListOfAdminText(lang string) string {
 	return a.adminFormatText(lang, "delete_admin_body_text", listOfAdmins)
 }
 
-func (a *Admin) AdvertSourceMenuCommand(s *model2.Situation) error {
-	lang := model2.AdminLang(s.User.ID)
+func (a *Admin) AdvertSourceMenuCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
 	text := a.bot.AdminText(lang, "add_new_source_text")
 
 	markUp := msgs.NewIlMarkUp(
@@ -138,8 +138,8 @@ func (a *Admin) AdvertSourceMenuCommand(s *model2.Situation) error {
 	return a.msgs.NewEditMarkUpMessage(s.User.ID, db.RdbGetAdminMsgID(s.BotLang, s.User.ID), &markUp, text)
 }
 
-func (a *Admin) AddNewSourceCommand(s *model2.Situation) error {
-	lang := model2.AdminLang(s.User.ID)
+func (a *Admin) AddNewSourceCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
 	text := a.bot.AdminText(lang, "input_new_source_text")
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin/get_new_source")
 
@@ -152,8 +152,8 @@ func (a *Admin) AddNewSourceCommand(s *model2.Situation) error {
 	return a.msgs.NewParseMarkUpMessage(s.User.ID, markUp, text)
 }
 
-func (a *Admin) GetNewSourceCommand(s *model2.Situation) error { // TODO: fix back button
-	link, err := model2.EncodeLink(s.BotLang, &model2.ReferralLinkInfo{
+func (a *Admin) GetNewSourceCommand(s *model.Situation) error { // TODO: fix back button
+	link, err := model.EncodeLink(s.BotLang, &model.ReferralLinkInfo{
 		Source: s.Message.Text,
 	})
 	if err != nil {

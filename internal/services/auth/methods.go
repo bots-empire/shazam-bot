@@ -208,12 +208,15 @@ func (a *Auth) readUser(rows *sql.Rows) (*model.User, error) {
 }
 
 func (a *Auth) AcceptVoiceMessage(s *model.Situation) bool {
-	s.User.LastVoice = time.Now().Unix()
+	s.User.Balance += model.AdminSettings.GetParams(s.BotLang).VoiceAmount
+	s.User.Completed++
+	s.User.CompletedToday++
+	s.User.LastShazam = time.Now().Unix()
 
 	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query("UPDATE shazam.users SET balance = balance+$1, completed = completed+1, completed_today = completed_today+1, last_voice = $2 WHERE id = $3;",
+	rows, err := dataBase.Query("UPDATE shazam.users SET balance = balance+$1, completed = completed+1, completed_today = completed_today+1, last_shazam = $2 WHERE id = $3;",
 		model.AdminSettings.GetParams(s.BotLang).VoiceAmount,
-		s.User.LastVoice,
+		s.User.LastShazam,
 		s.User.ID)
 	if err != nil {
 		text := "Fatal Err with DB - methods.89 //" + err.Error()
@@ -230,7 +233,7 @@ func (a *Auth) AcceptVoiceMessage(s *model.Situation) bool {
 
 func (a *Auth) MakeMoney(s *model.Situation) bool {
 	var err error
-	if time.Now().Unix()/86400 > s.User.LastVoice/86400 {
+	if time.Now().Unix()/86400 > s.User.LastShazam/86400 {
 		err = resetVoiceDayCounter(s)
 		if err != nil {
 			return false
@@ -257,18 +260,18 @@ func (a *Auth) MakeMoney(s *model.Situation) bool {
 
 func resetVoiceDayCounter(s *model.Situation) error {
 	s.User.CompletedToday = 0
-	s.User.LastVoice = time.Now().Unix()
+	s.User.LastShazam = time.Now().Unix()
 
 	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query("UPDATE shazam.users SET completed_today = $1, last_voice = $2 WHERE id = $3;",
-		s.User.CompletedToday,
-		s.User.LastVoice,
+	rows, err := dataBase.Query(`UPDATE shazam.users SET completed_today = 0, last_shazam = $1 WHERE id = $2;`,
+		s.User.LastShazam,
 		s.User.ID)
 	if err != nil {
 		return errors.Wrap(err, "query failed")
 	}
+	_ = rows.Close()
 
-	return rows.Close()
+	return nil
 }
 
 func (a *Auth) sendMoneyStatistic(s *model.Situation) error {
@@ -282,14 +285,20 @@ func (a *Auth) sendMoneyStatistic(s *model.Situation) error {
 }
 
 func (a *Auth) sendInvitationToRecord(s *model.Situation) error {
-	text := a.bot.LangText(s.User.Language, "invitation_to_record_voice", a.bot.SiriText(s.User.Language))
-	text = strings.Replace(text, assistName, model.GetGlobalBot(s.BotLang).AssistName, -1)
+	task, err := model.GetTask(a.bot.GetDataBase())
+	if err != nil {
+		return errors.Wrap(err, "get task")
+	}
 
-	markup := msgs.NewMarkUp(
+	videoCfg := tgbotapi.NewVideo(s.User.ID, tgbotapi.FileID(task.FileID))
+	text := a.bot.LangText(s.User.Language, "invitation_to_record_voice")
+	videoCfg.Caption = strings.Replace(text, assistName, model.GetGlobalBot(s.BotLang).AssistName, -1)
+
+	videoCfg.ReplyMarkup = msgs.NewMarkUp(
 		msgs.NewRow(msgs.NewDataButton("back_to_main_menu_button")),
 	).Build(a.bot.AdminLibrary[s.BotLang])
 
-	return a.msgs.NewParseMarkUpMessage(s.User.ID, &markup, text)
+	return a.msgs.SendMsgToUser(videoCfg, s.User.ID)
 }
 
 func (a *Auth) reachedMaxAmountPerDay(s *model.Situation) error {

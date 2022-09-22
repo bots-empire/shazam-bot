@@ -24,3 +24,7 @@ func NewUsersService(bot *model.GlobalBot, auth *auth.Auth, admin *administrator
 		Msgs:  msgs,
 	}
 }
+
+func (u *Users) GelBotLang() string {
+	return u.bot.BotLang
+}

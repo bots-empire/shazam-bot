@@ -199,10 +199,6 @@ func (u *Users) createSituationFromCallback(botLang string, callbackQuery *tgbot
 }
 
 func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
-	//videoCfg := tgbotapi.NewVideo(situation.User.ID, tgbotapi.FileID("AwACAgIAAxkBAAIJQGMsV027gjeozlywUMXmvaFDhJIgAAKCHQAC4rNgSd61gQlv1xQRKQQ"))
-	//videoCfg := tgbotapi.NewVideo(situation.User.ID, tgbotapi.FileID("CQACAgIAAxkBAAIJO2MsUR3LEI55uXyotBbhRA66f9e1AAJbHQAC4rNgSb5YbRtmS2MjKQQ"))
-	//fmt.Println(u.Msgs.SendMsgToUser(videoCfg, situation.User.ID))
-
 	maintenanceMode := model.AdminSettings.UnderMaintenance(situation.BotLang)
 
 	if situation.Command == "" {
@@ -496,6 +492,13 @@ func (u *Users) MakeMoneyCommand(s *model.Situation) error {
 func (u *Users) MakeMoneyMsgCommand(s *model.Situation) error {
 	if s.Message.Voice == nil {
 		msg := tgbotapi.NewMessage(s.Message.Chat.ID, u.bot.LangText(s.User.Language, "voice_not_recognized"))
+		_ = u.Msgs.SendMsgToUser(msg, s.User.ID)
+		return nil
+	}
+
+	length := db.RdbGetLengthOfTask(s.BotLang, s.User.ID) / 2
+	if s.Message.Voice.Duration < length {
+		msg := tgbotapi.NewMessage(s.Message.Chat.ID, u.bot.LangText(s.User.Language, "voice_length_too_small"))
 		_ = u.Msgs.SendMsgToUser(msg, s.User.ID)
 		return nil
 	}

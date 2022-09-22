@@ -42,7 +42,6 @@ type GlobalBot struct {
 	Commands     map[string]string
 	Language     map[string]map[string]string
 	AdminLibrary map[string]map[string]string
-	Tasks        map[string][]string
 
 	BotToken      string   `json:"bot_token"`
 	BotLink       string   `json:"bot_link"`

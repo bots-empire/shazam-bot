@@ -7,12 +7,12 @@ import (
 	"github.com/bots-empire/base-bot/msgs"
 
 	"github.com/bots-empire/shazam-bot/internal/db"
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (a *Admin) StartMailingCommand(s *model2.Situation) error {
+func (a *Admin) StartMailingCommand(s *model.Situation) error {
 	channel, _ := strconv.Atoi(strings.Split(s.CallbackQuery.Data, "?")[1])
 
 	err := a.mailing.StartMailing(channelsFromNum(channel))
@@ -21,7 +21,7 @@ func (a *Admin) StartMailingCommand(s *model2.Situation) error {
 	}
 
 	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "mailing_successful")
-	if channel == model2.GlobalMailing {
+	if channel == model.GlobalMailing {
 		return a.AdvertisementMenuCommand(s)
 	}
 	return a.resendAdvertisementMenuLevel(s.BotLang, s.User.ID, channel)
@@ -35,7 +35,7 @@ func channelsFromNum(channel int) []int {
 	return []int{channel}
 }
 
-func (a *Admin) SelectedLangCommand(s *model2.Situation) error {
+func (a *Admin) SelectedLangCommand(s *model.Situation) error {
 	data := strings.Split(s.CallbackQuery.Data, "?")
 	partition := data[1]
 	lang := data[2]
@@ -58,7 +58,7 @@ func (a *Admin) SelectedLangCommand(s *model2.Situation) error {
 }
 
 func (a *Admin) sendMailingMenu(botLang string, userID int64, channel string) error {
-	lang := model2.AdminLang(userID)
+	lang := model.AdminLang(userID)
 
 	text := a.bot.AdminText(lang, "mailing_main_text")
 	markUp := createMailingMarkUp(botLang, channel, a.bot.AdminLibrary[lang])
@@ -105,8 +105,8 @@ func createMailingMarkUp(botLang, channel string, texts map[string]string) tgbot
 }
 
 func switchLangOnKeyboard(lang string) {
-	model2.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang] = !model2.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang]
-	model2.SaveAdminSettings()
+	model.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang] = !model.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang]
+	model.SaveAdminSettings()
 }
 
 func (a *Admin) resendAdvertisementMenuLevel(botLang string, userID int64, channel int) error {
@@ -131,22 +131,22 @@ func (a *Admin) switchedSelectedLanguages() {
 }
 
 func resetSelectedLang() {
-	for lang := range model2.AdminSettings.GlobalParameters {
-		model2.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang] = false
+	for lang := range model.AdminSettings.GlobalParameters {
+		model.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang] = false
 	}
-	model2.SaveAdminSettings()
+	model.SaveAdminSettings()
 }
 
 func chooseAllLanguages() {
-	for lang := range model2.AdminSettings.GlobalParameters {
-		model2.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang] = true
+	for lang := range model.AdminSettings.GlobalParameters {
+		model.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang] = true
 	}
-	model2.SaveAdminSettings()
+	model.SaveAdminSettings()
 }
 
 func (a *Admin) selectedAllLanguage() bool {
 	for _, lang := range a.bot.LanguageInBot {
-		if !model2.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang] {
+		if !model.AdminSettings.GlobalParameters[lang].LangSelectedMap[lang] {
 			return false
 		}
 	}
@@ -154,5 +154,5 @@ func (a *Admin) selectedAllLanguage() bool {
 }
 
 func buttonUnderAdvertisementUnable(botLang string) bool {
-	return model2.AdminSettings.GlobalParameters[botLang].Parameters.ButtonUnderAdvert
+	return model.AdminSettings.GlobalParameters[botLang].Parameters.ButtonUnderAdvert
 }

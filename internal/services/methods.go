@@ -3,7 +3,7 @@ package services
 import (
 	"database/sql"
 
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 )
 
 func (u *Users) CreateNilTop(number int) error {
@@ -28,7 +28,7 @@ SELECT balance FROM shazam.users WHERE id = ?`, id).Scan(&balance)
 	return balance, nil
 }
 
-func (u *Users) GetUsers(limit int) ([]*model2.User, error) {
+func (u *Users) GetUsers(limit int) ([]*model.User, error) {
 	dataBase := u.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 SELECT id, balance FROM shazam.users ORDER BY balance DESC LIMIT $1`,
@@ -45,26 +45,26 @@ SELECT id, balance FROM shazam.users ORDER BY balance DESC LIMIT $1`,
 	return user, nil
 }
 
-func readUserBalance(rows *sql.Rows) ([]*model2.User, error) {
+func readUserBalance(rows *sql.Rows) ([]*model.User, error) {
 	defer rows.Close()
 
-	var users []*model2.User
+	var users []*model.User
 
 	for rows.Next() {
 		var id int64
 		var balance int
 
 		if err := rows.Scan(&id, &balance); err != nil {
-			return nil, model2.ErrScanSqlRow
+			return nil, model.ErrScanSqlRow
 		}
 
-		users = append(users, &model2.User{
+		users = append(users, &model.User{
 			ID:      id,
 			Balance: balance,
 		})
 	}
 	if len(users) == 0 {
-		users = append(users, &model2.User{
+		users = append(users, &model.User{
 			ID:      0,
 			Balance: 0,
 		})
@@ -72,10 +72,10 @@ func readUserBalance(rows *sql.Rows) ([]*model2.User, error) {
 	return users, nil
 }
 
-func (u *Users) GetFromTop(topNumber int) (*model2.Top, error) {
+func (u *Users) GetFromTop(topNumber int) (*model.Top, error) {
 	dataBase := u.bot.GetDataBase()
 
-	top := &model2.Top{
+	top := &model.Top{
 		Top: topNumber,
 	}
 
@@ -85,7 +85,7 @@ func (u *Users) GetFromTop(topNumber int) (*model2.Top, error) {
 	return top, nil
 }
 
-func (u *Users) GetTop() ([]*model2.Top, error) {
+func (u *Users) GetTop() ([]*model.Top, error) {
 	dataBase := u.bot.GetDataBase()
 
 	rows, err := dataBase.Query(`SELECT * FROM shazam.top;`)
@@ -125,12 +125,12 @@ UPDATE shazam.users SET balance = $1
 	return nil
 }
 
-func (u *Users) ReadRows(rows *sql.Rows) ([]*model2.Top, error) {
+func (u *Users) ReadRows(rows *sql.Rows) ([]*model.Top, error) {
 	defer rows.Close()
-	var topArr []*model2.Top
+	var topArr []*model.Top
 
 	for rows.Next() {
-		top := &model2.Top{}
+		top := &model.Top{}
 		err := rows.Scan(&top.Top, &top.UserID, &top.TimeOnTop, &top.Balance)
 		if err != nil {
 			return nil, err

@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/json"
-	"math/rand"
 	"os"
 	"strings"
 
@@ -35,18 +34,6 @@ func (b *GlobalBot) ParseLangMap() {
 func (b *GlobalBot) ParseCommandsList() {
 	bytes, _ := os.ReadFile(commandsPath + jsonFormatName)
 	_ = json.Unmarshal(bytes, &b.Commands)
-}
-
-func (b *GlobalBot) ParseSiriTasks() {
-	b.Tasks = make(map[string][]string)
-
-	for _, lang := range b.LanguageInBot {
-		bytes, _ := os.ReadFile(beginningOfSiriLangPath + lang + jsonFormatName)
-		dictionary := make([]string, 0)
-
-		_ = json.Unmarshal(bytes, &dictionary)
-		b.Tasks[lang] = dictionary
-	}
 }
 
 func (b *GlobalBot) GetCommandFromText(message *tgbotapi.Message, userLang string, userID int64) (string, error) {
@@ -93,11 +80,6 @@ func getAdminLang(userID int64) string {
 		}
 	}
 	return ""
-}
-
-func (b *GlobalBot) SiriText(lang string) string {
-	num := rand.Intn(len(b.Tasks[lang]))
-	return b.Tasks[lang][num]
 }
 
 func (b *GlobalBot) ParseAdminMap() {

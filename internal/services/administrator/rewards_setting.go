@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/bots-empire/shazam-bot/internal/db"
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 	currencyType        = "currency_type"
 )
 
-func (a *Admin) MakeMoneySettingCommand(s *model2.Situation) error {
+func (a *Admin) MakeMoneySettingCommand(s *model.Situation) error {
 	markUp, text := a.sendMakeMoneyMenu(s.BotLang, s.User.ID)
 
 	if db.RdbGetAdminMsgID(s.BotLang, s.User.ID) != 0 {
@@ -45,7 +45,7 @@ func (a *Admin) MakeMoneySettingCommand(s *model2.Situation) error {
 }
 
 func (a *Admin) sendMakeMoneyMenu(botLang string, userID int64) (*tgbotapi.InlineKeyboardMarkup, string) {
-	lang := model2.AdminLang(userID)
+	lang := model.AdminLang(userID)
 	text := a.bot.AdminText(lang, "make_money_setting_text")
 
 	markUp := msgs.NewIlMarkUp(
@@ -65,10 +65,10 @@ func (a *Admin) sendMakeMoneyMenu(botLang string, userID int64) (*tgbotapi.Inlin
 	return &markUp, text
 }
 
-func (a *Admin) ChangeParameterCommand(s *model2.Situation) error {
+func (a *Admin) ChangeParameterCommand(s *model.Situation) error {
 	changeParameter := strings.Split(s.CallbackQuery.Data, "?")[1]
 
-	lang := model2.AdminLang(s.User.ID)
+	lang := model.AdminLang(s.User.ID)
 	var parameter, text string
 	var value interface{}
 
@@ -77,22 +77,22 @@ func (a *Admin) ChangeParameterCommand(s *model2.Situation) error {
 	switch changeParameter {
 	case bonusAmount:
 		parameter = a.bot.AdminText(lang, "change_bonus_amount_button")
-		value = model2.AdminSettings.GetParams(s.BotLang).BonusAmount
+		value = model.AdminSettings.GetParams(s.BotLang).BonusAmount
 	case minWithdrawalAmount:
 		parameter = a.bot.AdminText(lang, "change_min_withdrawal_amount_button")
-		value = model2.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount
+		value = model.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount
 	case voiceAmount:
 		parameter = a.bot.AdminText(lang, "change_voice_amount_button")
-		value = model2.AdminSettings.GetParams(s.BotLang).VoiceAmount
+		value = model.AdminSettings.GetParams(s.BotLang).VoiceAmount
 	case voicePDAmount:
 		parameter = a.bot.AdminText(lang, "change_voice_pd_amount_button")
-		value = model2.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay
+		value = model.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay
 	case referralAmount:
 		parameter = a.bot.AdminText(lang, "change_referral_amount_button")
-		value = model2.AdminSettings.GetParams(s.BotLang).ReferralAmount
+		value = model.AdminSettings.GetParams(s.BotLang).ReferralAmount
 	case currencyType:
 		parameter = a.bot.AdminText(lang, "change_currency_type_button")
-		value = model2.AdminSettings.GetCurrency(s.BotLang)
+		value = model.AdminSettings.GetCurrency(s.BotLang)
 	}
 
 	text = a.adminFormatText(lang, "set_new_amount_text", parameter, value)
@@ -105,17 +105,17 @@ func (a *Admin) ChangeParameterCommand(s *model2.Situation) error {
 	return a.msgs.NewParseMarkUpMessage(s.User.ID, markUp, text)
 }
 
-func (a *Admin) NotClickableButton(s *model2.Situation) error {
+func (a *Admin) NotClickableButton(s *model.Situation) error {
 	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "not_clickable_button")
 	return nil
 }
 
-func (a *Admin) SetTopAmountCommand(s *model2.Situation) error {
-	lang := model2.AdminLang(s.User.ID)
+func (a *Admin) SetTopAmountCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
 	text := a.adminFormatText(lang, "change_top_settings_button")
 
 	top := db.RdbGetTopLevelSetting(s.BotLang, s.User.ID)
-	markUp := getTopSettingMenu(a.bot.AdminLibrary[lang], top+1, model2.AdminSettings.GlobalParameters[s.BotLang].Parameters.TopReward[top])
+	markUp := getTopSettingMenu(a.bot.AdminLibrary[lang], top+1, model.AdminSettings.GlobalParameters[s.BotLang].Parameters.TopReward[top])
 
 	msgID := db.RdbGetAdminMsgID(s.BotLang, s.User.ID)
 	if msgID == 0 {
@@ -153,7 +153,7 @@ func getTopSettingMenu(texts map[string]string, top int, amount int) *tgbotapi.I
 	return &markUp
 }
 
-func (a *Admin) ChangeTopLevelCommand(s *model2.Situation) error {
+func (a *Admin) ChangeTopLevelCommand(s *model.Situation) error {
 	level := db.RdbGetTopLevelSetting(s.BotLang, s.User.ID)
 	operation := strings.Split(s.CallbackQuery.Data, "?")[1]
 
@@ -176,7 +176,7 @@ func (a *Admin) ChangeTopLevelCommand(s *model2.Situation) error {
 	return a.SetTopAmountCommand(s)
 }
 
-func (a *Admin) ChangeTopAmountButtonCommand(s *model2.Situation) error {
+func (a *Admin) ChangeTopAmountButtonCommand(s *model.Situation) error {
 	level := db.RdbGetTopLevelSetting(s.BotLang, s.User.ID)
 
 	allParams := strings.Split(s.CallbackQuery.Data, "?")[1]
@@ -186,18 +186,18 @@ func (a *Admin) ChangeTopAmountButtonCommand(s *model2.Situation) error {
 	switch operation {
 	case "inc":
 		value, _ := strconv.Atoi(changeParams[1])
-		model2.AdminSettings.GetParams(s.BotLang).TopReward[level] += value
+		model.AdminSettings.GetParams(s.BotLang).TopReward[level] += value
 	case "dec":
 		value, _ := strconv.Atoi(changeParams[1])
 
-		if model2.AdminSettings.GetParams(s.BotLang).TopReward[level]-value < 1 {
+		if model.AdminSettings.GetParams(s.BotLang).TopReward[level]-value < 1 {
 			_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "already_min_value")
 			return nil
 		}
 
-		model2.AdminSettings.GetParams(s.BotLang).TopReward[level] -= value
+		model.AdminSettings.GetParams(s.BotLang).TopReward[level] -= value
 	}
 
-	model2.SaveAdminSettings()
+	model.SaveAdminSettings()
 	return a.SetTopAmountCommand(s)
 }

@@ -1,47 +1,12 @@
 package administrator
 
-import (
-	"database/sql"
-	"math/rand"
+import "github.com/pkg/errors"
 
-	"github.com/pkg/errors"
-
-	"github.com/bots-empire/shazam-bot/internal/model"
-)
-
-func (a *Admin) GetTask() (*model.ShazamTask, error) {
-	rows, err := a.bot.GetDataBase().Query(`
-SELECT * FROm shazam.tasks;`)
+func (a *Admin) AddTaskToDB(fileID string, voiceLength int) error {
+	_, err := a.bot.GetDataBase().Exec("INSERT INTO shazam.tasks (file_id,voice_length) VALUES ($1,$2)", fileID, voiceLength)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed get tasks")
-	}
-	defer rows.Close()
-
-	tasks, err := a.readTasks(rows)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed read tasks from rows")
+		return errors.Wrap(err, "failed to insert file_id and voice_length")
 	}
 
-	if len(tasks) == 0 {
-		return nil, model.ErrTaskNotFound
-	}
-
-	return tasks[rand.Intn(len(tasks))], nil
-}
-
-func (a *Admin) readTasks(rows *sql.Rows) ([]*model.ShazamTask, error) {
-	var tasks []*model.ShazamTask
-
-	for rows.Next() {
-		task := &model.ShazamTask{}
-
-		if err := rows.Scan(
-			&task.FileID,
-			&task.VoiceLength); err != nil {
-			return nil, err
-		}
-
-		tasks = append(tasks, task)
-	}
-	return tasks, nil
+	return nil
 }

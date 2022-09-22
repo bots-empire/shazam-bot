@@ -3,7 +3,8 @@
 CREATE TABLE IF NOT EXISTS shazam.tasks
 (
     file_id         text,
-    voice_length    int
+    voice_length    int,
+    UNIQUE(file_id)
 );
 -- +goose StatementEnd
 
