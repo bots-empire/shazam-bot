@@ -28,6 +28,7 @@ func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/change_text_url", adminSrv.SetNewTextUrlCommand)
 	h.OnCommand("/advertisement_setting", adminSrv.AdvertisementSettingCommand)
 	h.OnCommand("/get_new_source", adminSrv.GetNewSourceCommand)
+	h.OnCommand("/music_task", adminSrv.MusicTask)
 }
 
 func (h *AdminMessagesHandlers) OnCommand(command string, handler model.Handler) {

@@ -576,7 +576,7 @@ func (a *Admin) GetTasks(s *model.Situation) error {
 		return err
 	}
 
-	text := a.bot.LangText(model.AdminLang(s.User.ID), "all_tasks")
+	text := a.adminFormatText(model.AdminLang(s.User.ID), "all_tasks")
 	err = a.msgs.NewParseMessage(s.User.ID, text)
 	if err != nil {
 		return errors.Wrap(err, "all tasks: failed to parse message")
