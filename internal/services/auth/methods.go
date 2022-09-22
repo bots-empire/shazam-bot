@@ -12,14 +12,14 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/bots-empire/shazam-bot/internal/db"
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 )
 
 const (
 	assistName = "{{assist_name}}"
 )
 
-func (a *Auth) WithdrawMoneyFromBalance(s *model2.Situation, amount string) error {
+func (a *Auth) WithdrawMoneyFromBalance(s *model.Situation, amount string) error {
 	amount = strings.Replace(amount, " ", "", -1)
 	amountInt, err := strconv.Atoi(amount)
 	if err != nil {
@@ -27,7 +27,7 @@ func (a *Auth) WithdrawMoneyFromBalance(s *model2.Situation, amount string) erro
 		return a.msgs.SendMsgToUser(msg, s.User.ID)
 	}
 
-	if amountInt < model2.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount {
+	if amountInt < model.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount {
 		return a.minAmountNotReached(s.User)
 	}
 
@@ -39,26 +39,26 @@ func (a *Auth) WithdrawMoneyFromBalance(s *model2.Situation, amount string) erro
 	return a.sendInvitationToSubs(s, amount)
 }
 
-func (a *Auth) minAmountNotReached(u *model2.User) error {
+func (a *Auth) minAmountNotReached(u *model.User) error {
 	text := a.bot.LangText(u.Language, "minimum_amount_not_reached",
-		model2.AdminSettings.GetParams(u.Language).MinWithdrawalAmount)
+		model.AdminSettings.GetParams(u.Language).MinWithdrawalAmount)
 
 	return a.msgs.NewParseMessage(u.ID, text)
 }
 
-func (a *Auth) sendInvitationToSubs(s *model2.Situation, amount string) error {
+func (a *Auth) sendInvitationToSubs(s *model.Situation, amount string) error {
 	text := a.bot.LangText(s.User.Language, "withdrawal_not_subs_text")
 
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 	msg.ReplyMarkup = msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model2.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel))),
 		msgs.NewIlRow(msgs.NewIlDataButton("im_subscribe_button", "/withdrawal_money?"+amount)),
 	).Build(a.bot.Language[s.User.Language])
 
 	return a.msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (a *Auth) CheckSubscribeToWithdrawal(s *model2.Situation, amount int) bool {
+func (a *Auth) CheckSubscribeToWithdrawal(s *model.Situation, amount int) bool {
 	if s.User.Balance < amount {
 		return false
 	}
@@ -69,7 +69,7 @@ func (a *Auth) CheckSubscribeToWithdrawal(s *model2.Situation, amount int) bool 
 	}
 
 	s.User.Balance -= amount
-	dataBase := model2.GetDB(s.BotLang)
+	dataBase := model.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
 UPDATE shazam.users 
 	SET balance = $1
@@ -86,7 +86,7 @@ WHERE id = $2;`,
 	return true
 }
 
-func (a *Auth) GetABonus(s *model2.Situation) error {
+func (a *Auth) GetABonus(s *model.Situation) error {
 	if !a.CheckSubscribe(s, "get_bonus") {
 		text := a.bot.LangText(s.User.Language, "user_dont_subscribe")
 		return a.msgs.SendSimpleMsg(s.User.ID, text)
@@ -97,8 +97,8 @@ func (a *Auth) GetABonus(s *model2.Situation) error {
 		return a.msgs.SendSimpleMsg(s.User.ID, text)
 	}
 
-	s.User.Balance += model2.AdminSettings.GetParams(s.BotLang).BonusAmount
-	dataBase := model2.GetDB(s.BotLang)
+	s.User.Balance += model.AdminSettings.GetParams(s.BotLang).BonusAmount
+	dataBase := model.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
 UPDATE shazam.users 
 	SET balance = $1, take_bonus = $2
@@ -115,17 +115,17 @@ WHERE id = $3;`,
 	return a.msgs.SendSimpleMsg(s.User.ID, text)
 }
 
-func (a *Auth) CheckSubscribe(s *model2.Situation, source string) bool {
-	model2.CheckSubscribe.WithLabelValues(
-		model2.GetGlobalBot(s.BotLang).BotLink,
+func (a *Auth) CheckSubscribe(s *model.Situation, source string) bool {
+	model.CheckSubscribe.WithLabelValues(
+		model.GetGlobalBot(s.BotLang).BotLink,
 		s.BotLang,
-		model2.AdminSettings.GetAdvertUrl(s.BotLang, 1),
+		model.AdminSettings.GetAdvertUrl(s.BotLang, 1),
 		source,
 	).Inc()
 
-	member, err := model2.Bots[s.BotLang].Bot.GetChatMember(tgbotapi.GetChatMemberConfig{
+	member, err := model.Bots[s.BotLang].Bot.GetChatMember(tgbotapi.GetChatMemberConfig{
 		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
-			ChatID: model2.AdminSettings.GetAdvertChannelID(s.BotLang, 1),
+			ChatID: model.AdminSettings.GetAdvertChannelID(s.BotLang, 1),
 			UserID: s.User.ID,
 		},
 	})
@@ -155,8 +155,8 @@ func checkMemberStatus(member tgbotapi.ChatMember) bool {
 	return false
 }
 
-func (a *Auth) addMemberToSubsBase(s *model2.Situation) error {
-	dataBase := model2.GetDB(s.BotLang)
+func (a *Auth) addMemberToSubsBase(s *model.Situation) error {
+	dataBase := model.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
 SELECT * FROM subs 
 	WHERE id = $1;`,
@@ -183,37 +183,37 @@ INSERT INTO subs VALUES($1);`,
 	return nil
 }
 
-func (a *Auth) readUser(rows *sql.Rows) (*model2.User, error) {
+func (a *Auth) readUser(rows *sql.Rows) (*model.User, error) {
 	defer rows.Close()
 
-	var users []*model2.User
+	var users []*model.User
 
 	for rows.Next() {
 		var id int64
 
 		if err := rows.Scan(&id); err != nil {
-			return nil, model2.ErrScanSqlRow
+			return nil, model.ErrScanSqlRow
 		}
 
-		users = append(users, &model2.User{
+		users = append(users, &model.User{
 			ID: id,
 		})
 	}
 	if len(users) == 0 {
-		users = append(users, &model2.User{
+		users = append(users, &model.User{
 			ID: 0,
 		})
 	}
 	return users[0], nil
 }
 
-func (a *Auth) AcceptVoiceMessage(s *model2.Situation) bool {
-	s.User.Balance += model2.AdminSettings.GetParams(s.BotLang).VoiceAmount
+func (a *Auth) AcceptVoiceMessage(s *model.Situation) bool {
+	s.User.Balance += model.AdminSettings.GetParams(s.BotLang).VoiceAmount
 	s.User.Completed++
 	s.User.CompletedToday++
 	s.User.LastVoice = time.Now().Unix()
 
-	dataBase := model2.GetDB(s.BotLang)
+	dataBase := model.GetDB(s.BotLang)
 	rows, err := dataBase.Query("UPDATE shazam.users SET balance = $1, completed = $2, completed_today = $3, last_voice = $4 WHERE id = $5;",
 		s.User.Balance,
 		s.User.Completed,
@@ -233,7 +233,7 @@ func (a *Auth) AcceptVoiceMessage(s *model2.Situation) bool {
 	return a.MakeMoney(s)
 }
 
-func (a *Auth) MakeMoney(s *model2.Situation) bool {
+func (a *Auth) MakeMoney(s *model.Situation) bool {
 	var err error
 	if time.Now().Unix()/86400 > s.User.LastVoice/86400 {
 		err = resetVoiceDayCounter(s)
@@ -242,7 +242,7 @@ func (a *Auth) MakeMoney(s *model2.Situation) bool {
 		}
 	}
 
-	if s.User.CompletedToday >= model2.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay {
+	if s.User.CompletedToday >= model.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay {
 		_ = a.reachedMaxAmountPerDay(s)
 		return false
 	}
@@ -260,11 +260,11 @@ func (a *Auth) MakeMoney(s *model2.Situation) bool {
 	return true
 }
 
-func resetVoiceDayCounter(s *model2.Situation) error {
+func resetVoiceDayCounter(s *model.Situation) error {
 	s.User.CompletedToday = 0
 	s.User.LastVoice = time.Now().Unix()
 
-	dataBase := model2.GetDB(s.BotLang)
+	dataBase := model.GetDB(s.BotLang)
 	rows, err := dataBase.Query("UPDATE shazam.users SET completed_today = $1, last_voice = $2 WHERE id = $3;",
 		s.User.CompletedToday,
 		s.User.LastVoice,
@@ -276,19 +276,19 @@ func resetVoiceDayCounter(s *model2.Situation) error {
 	return rows.Close()
 }
 
-func (a *Auth) sendMoneyStatistic(s *model2.Situation) error {
+func (a *Auth) sendMoneyStatistic(s *model.Situation) error {
 	text := a.bot.LangText(s.User.Language, "make_money_statistic", s.User.CompletedToday,
-		model2.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay,
-		model2.AdminSettings.GetParams(s.BotLang).VoiceAmount,
+		model.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay,
+		model.AdminSettings.GetParams(s.BotLang).VoiceAmount,
 		s.User.Balance,
-		s.User.CompletedToday*model2.AdminSettings.GetParams(s.BotLang).VoiceAmount)
+		s.User.CompletedToday*model.AdminSettings.GetParams(s.BotLang).VoiceAmount)
 
 	return a.msgs.NewParseMessage(s.User.ID, text)
 }
 
-func (a *Auth) sendInvitationToRecord(s *model2.Situation) error {
+func (a *Auth) sendInvitationToRecord(s *model.Situation) error {
 	text := a.bot.LangText(s.User.Language, "invitation_to_record_voice", a.bot.SiriText(s.User.Language))
-	text = strings.Replace(text, assistName, model2.GetGlobalBot(s.BotLang).AssistName, -1)
+	text = strings.Replace(text, assistName, model.GetGlobalBot(s.BotLang).AssistName, -1)
 
 	markup := msgs.NewMarkUp(
 		msgs.NewRow(msgs.NewDataButton("back_to_main_menu_button")),
@@ -297,12 +297,16 @@ func (a *Auth) sendInvitationToRecord(s *model2.Situation) error {
 	return a.msgs.NewParseMarkUpMessage(s.User.ID, &markup, text)
 }
 
-func (a *Auth) reachedMaxAmountPerDay(s *model2.Situation) error {
-	text := a.bot.LangText(s.User.Language, "reached_max_amount_per_day", model2.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay, model2.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay)
+func (a *Auth) reachedMaxAmountPerDay(s *model.Situation) error {
+	text := a.bot.LangText(s.User.Language, "reached_max_amount_per_day", model.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay, model.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay)
 
 	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", model2.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", model.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel))),
 	).Build(a.bot.Language[s.User.Language])
 
 	return a.msgs.NewParseMarkUpMessage(s.User.ID, &markUp, text)
+}
+
+func (a *Auth) GetTask() {
+
 }
