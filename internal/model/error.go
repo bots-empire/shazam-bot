@@ -9,6 +9,8 @@ const (
 	ErrFoundTwoUsers = Error("found two users")
 	// ErrNotAdminUser error not admin user.
 	ErrNotAdminUser = Error("not admin user")
+	// ErrTaskNotFound error task not found.
+	ErrTaskNotFound = Error("task not found")
 
 	ErrNotSelectedLanguage = Error("not selected language")
 

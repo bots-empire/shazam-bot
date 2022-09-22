@@ -199,9 +199,9 @@ func (u *Users) createSituationFromCallback(botLang string, callbackQuery *tgbot
 }
 
 func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
-	videoCfg := tgbotapi.NewVideo(situation.User.ID, tgbotapi.FileID("AwACAgIAAxkBAAIJQGMsV027gjeozlywUMXmvaFDhJIgAAKCHQAC4rNgSd61gQlv1xQRKQQ"))
+	//videoCfg := tgbotapi.NewVideo(situation.User.ID, tgbotapi.FileID("AwACAgIAAxkBAAIJQGMsV027gjeozlywUMXmvaFDhJIgAAKCHQAC4rNgSd61gQlv1xQRKQQ"))
 	//videoCfg := tgbotapi.NewVideo(situation.User.ID, tgbotapi.FileID("CQACAgIAAxkBAAIJO2MsUR3LEI55uXyotBbhRA66f9e1AAJbHQAC4rNgSb5YbRtmS2MjKQQ"))
-	fmt.Println(u.Msgs.SendMsgToUser(videoCfg, situation.User.ID))
+	//fmt.Println(u.Msgs.SendMsgToUser(videoCfg, situation.User.ID))
 
 	maintenanceMode := model.AdminSettings.UnderMaintenance(situation.BotLang)
 

@@ -208,16 +208,11 @@ func (a *Auth) readUser(rows *sql.Rows) (*model.User, error) {
 }
 
 func (a *Auth) AcceptVoiceMessage(s *model.Situation) bool {
-	s.User.Balance += model.AdminSettings.GetParams(s.BotLang).VoiceAmount
-	s.User.Completed++
-	s.User.CompletedToday++
 	s.User.LastVoice = time.Now().Unix()
 
 	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query("UPDATE shazam.users SET balance = $1, completed = $2, completed_today = $3, last_voice = $4 WHERE id = $5;",
-		s.User.Balance,
-		s.User.Completed,
-		s.User.CompletedToday,
+	rows, err := dataBase.Query("UPDATE shazam.users SET balance = balance+$1, completed = completed+1, completed_today = completed_today+1, last_voice = $2 WHERE id = $3;",
+		model.AdminSettings.GetParams(s.BotLang).VoiceAmount,
 		s.User.LastVoice,
 		s.User.ID)
 	if err != nil {
@@ -305,8 +300,4 @@ func (a *Auth) reachedMaxAmountPerDay(s *model.Situation) error {
 	).Build(a.bot.Language[s.User.Language])
 
 	return a.msgs.NewParseMarkUpMessage(s.User.ID, &markUp, text)
-}
-
-func (a *Auth) GetTask() {
-
 }
