@@ -18,7 +18,6 @@ const (
 	minWithdrawalAmount = "min_withdrawal_amount"
 	voiceAmount         = "voice_amount"
 	voicePDAmount       = "voice_pd_amount"
-	referralAmount      = "referral_amount"
 	currencyType        = "currency_type"
 )
 
@@ -87,9 +86,6 @@ func (a *Admin) ChangeParameterCommand(s *model.Situation) error {
 	case voicePDAmount:
 		parameter = a.bot.AdminText(lang, "change_voice_pd_amount_button")
 		value = model.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay
-	case referralAmount:
-		parameter = a.bot.AdminText(lang, "change_referral_amount_button")
-		value = model.AdminSettings.GetParams(s.BotLang).ReferralAmount
 	case currencyType:
 		parameter = a.bot.AdminText(lang, "change_currency_type_button")
 		value = model.AdminSettings.GetCurrency(s.BotLang)

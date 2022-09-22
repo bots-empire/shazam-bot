@@ -347,7 +347,7 @@ func (u *Users) MoneyForAFriendCommand(s *model.Situation) error {
 
 	text := u.bot.LangText(s.User.Language, "referral_text",
 		link,
-		model.AdminSettings.GetParams(s.BotLang).ReferralAmount,
+		model.AdminSettings.GetParams(s.BotLang).ReferralReward,
 		s.User.ReferralCount)
 
 	return u.Msgs.NewParseMessage(s.User.ID, text)

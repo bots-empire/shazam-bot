@@ -1,9 +1,10 @@
 package administrator
 
 import (
-	"github.com/pkg/errors"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
@@ -179,8 +180,6 @@ func (a *Admin) setNewIntParameter(s *model.Situation, partition string) error {
 		model.AdminSettings.UpdateVoiceAmount(s.BotLang, newAmount)
 	case voicePDAmount:
 		model.AdminSettings.UpdateMaxOfVoicePerDay(s.BotLang, newAmount)
-	case referralAmount:
-		model.AdminSettings.UpdateReferralAmount(s.BotLang, newAmount)
 	}
 
 	return nil
@@ -256,8 +255,8 @@ func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
 }
 
 func (a *Admin) MusicTask(s *model.Situation) error {
-	fileID := s.CallbackQuery.Message.Audio.FileID
-	voiceLength := s.CallbackQuery.Message.Audio.Duration
+	fileID := s.Message.Voice.FileID
+	voiceLength := s.Message.Voice.Duration
 
 	err := a.AddTaskToDB(fileID, voiceLength)
 	if err != nil {

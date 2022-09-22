@@ -69,8 +69,11 @@ func (a *Auth) SetStartLanguage(callback *tgbotapi.CallbackQuery) error {
 }
 
 func (a *Auth) addNewUser(user *model.User, botLang string, referralID int64) error {
-	dataBase := a.bot.GetDataBase()
-	rows, err := dataBase.Query("INSERT INTO shazam.users VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);",
+	if referralID == user.ID {
+		referralID = 0
+	}
+
+	rows, err := a.bot.GetDataBase().Query("INSERT INTO shazam.users VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);",
 		user.ID,
 		user.Balance,
 		user.Completed,
@@ -86,27 +89,11 @@ func (a *Auth) addNewUser(user *model.User, botLang string, referralID int64) er
 	}
 	_ = rows.Close()
 
-	if referralID == user.ID || referralID == 0 {
+	if referralID == 0 {
 		return nil
 	}
 
-	baseUser, err := a.GetUser(referralID)
-	if err != nil {
-		return errors.Wrap(err, "get user")
-	}
-
-	// TODO: refactor accrual system
-
-	baseUser.Balance += model.AdminSettings.GetParams(botLang).ReferralAmount
-	_, err = dataBase.Exec("UPDATE shazam.users SET balance = $1, referral_count = $2 WHERE id = $3;",
-		baseUser.Balance, baseUser.ReferralCount+1, baseUser.ID)
-	if err != nil {
-		text := "Fatal Err with DB - auth.85 //" + err.Error()
-		a.msgs.SendNotificationToDeveloper(text, false)
-		return err
-	}
-
-	return nil
+	return a.referralRewardSystem(botLang, referralID, 1)
 }
 
 func (a *Auth) pullReferralID(message *tgbotapi.Message) int64 {
