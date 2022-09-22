@@ -71,9 +71,9 @@ func (a *Auth) CheckSubscribeToWithdrawal(s *model2.Situation, amount int) bool 
 	s.User.Balance -= amount
 	dataBase := model2.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
-UPDATE users 
-	SET balance = ?
-WHERE id = ?;`,
+UPDATE shazam.users 
+	SET balance = $1
+WHERE id = $2;`,
 		s.User.Balance,
 		s.User.ID)
 	if err != nil {
@@ -100,9 +100,9 @@ func (a *Auth) GetABonus(s *model2.Situation) error {
 	s.User.Balance += model2.AdminSettings.GetParams(s.BotLang).BonusAmount
 	dataBase := model2.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
-UPDATE users 
-	SET balance = ?, take_bonus = ?
-WHERE id = ?;`,
+UPDATE shazam.users 
+	SET balance = $1, take_bonus = $2
+WHERE id = $3;`,
 		s.User.Balance,
 		true,
 		s.User.ID)
@@ -159,7 +159,7 @@ func (a *Auth) addMemberToSubsBase(s *model2.Situation) error {
 	dataBase := model2.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
 SELECT * FROM subs 
-	WHERE id = ?;`,
+	WHERE id = $1;`,
 		s.User.ID)
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ SELECT * FROM subs
 		return nil
 	}
 	rows, err = dataBase.Query(`
-INSERT INTO subs VALUES(?);`,
+INSERT INTO subs VALUES($1);`,
 		s.User.ID)
 	if err != nil {
 		return err
@@ -214,8 +214,12 @@ func (a *Auth) AcceptVoiceMessage(s *model2.Situation) bool {
 	s.User.LastVoice = time.Now().Unix()
 
 	dataBase := model2.GetDB(s.BotLang)
-	rows, err := dataBase.Query("UPDATE users SET balance = ?, completed = ?, completed_today = ?, last_voice = ? WHERE id = ?;",
-		s.User.Balance, s.User.Completed, s.User.CompletedToday, s.User.LastVoice, s.User.ID)
+	rows, err := dataBase.Query("UPDATE shazam.users SET balance = $1, completed = $2, completed_today = $3, last_voice = $4 WHERE id = $5;",
+		s.User.Balance,
+		s.User.Completed,
+		s.User.CompletedToday,
+		s.User.LastVoice,
+		s.User.ID)
 	if err != nil {
 		text := "Fatal Err with DB - methods.89 //" + err.Error()
 		a.msgs.SendNotificationToDeveloper(text, false)
@@ -261,8 +265,10 @@ func resetVoiceDayCounter(s *model2.Situation) error {
 	s.User.LastVoice = time.Now().Unix()
 
 	dataBase := model2.GetDB(s.BotLang)
-	rows, err := dataBase.Query("UPDATE users SET completed_today = ?, last_voice = ? WHERE id = ?;",
-		s.User.CompletedToday, s.User.LastVoice, s.User.ID)
+	rows, err := dataBase.Query("UPDATE shazam.users SET completed_today = $1, last_voice = $2 WHERE id = $3;",
+		s.User.CompletedToday,
+		s.User.LastVoice,
+		s.User.ID)
 	if err != nil {
 		return errors.Wrap(err, "query failed")
 	}

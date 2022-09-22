@@ -8,18 +8,15 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
 
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 	"github.com/bots-empire/shazam-bot/internal/services/administrator"
 )
 
 const (
-	//typeFriend = "friend"
-	//typeGroup  = "group"
-
-	getUsersUserQuery = "SELECT * FROM users WHERE id = ?;"
+	getUsersUserQuery = "SELECT * FROM shazam.users WHERE id = $1;"
 )
 
-func (a *Auth) CheckingTheUser(message *tgbotapi.Message) (*model2.User, error) {
+func (a *Auth) CheckingTheUser(message *tgbotapi.Message) (*model.User, error) {
 	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(getUsersUserQuery, message.From.ID)
 	if err != nil {
@@ -42,38 +39,38 @@ func (a *Auth) CheckingTheUser(message *tgbotapi.Message) (*model2.User, error) 
 			return nil, errors.Wrap(err, "add new user")
 		}
 
-		model2.TotalIncome.WithLabelValues(
+		model.TotalIncome.WithLabelValues(
 			a.bot.BotLink,
 			a.bot.BotLang,
 		).Inc()
 
 		if user.Language == "not_defined" {
-			return user, model2.ErrNotSelectedLanguage
+			return user, model.ErrNotSelectedLanguage
 		}
 		return user, nil
 	case 1:
 		if users[0].Language == "not_defined" {
-			return users[0], model2.ErrNotSelectedLanguage
+			return users[0], model.ErrNotSelectedLanguage
 		}
 		return users[0], nil
 	default:
-		return nil, model2.ErrFoundTwoUsers
+		return nil, model.ErrFoundTwoUsers
 	}
 }
 
 func (a *Auth) SetStartLanguage(callback *tgbotapi.CallbackQuery) error {
 	data := strings.Split(callback.Data, "?")[1]
 	dataBase := a.bot.GetDataBase()
-	_, err := dataBase.Exec("UPDATE users SET lang = ? WHERE id = ?", data, callback.From.ID)
+	_, err := dataBase.Exec("UPDATE shazam.users SET lang = $1 WHERE id = $2", data, callback.From.ID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *Auth) addNewUser(user *model2.User, botLang string, referralID int64) error {
+func (a *Auth) addNewUser(user *model.User, botLang string, referralID int64) error {
 	dataBase := a.bot.GetDataBase()
-	rows, err := dataBase.Query("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+	rows, err := dataBase.Query("INSERT INTO shazam.users VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);",
 		user.ID,
 		user.Balance,
 		user.Completed,
@@ -100,8 +97,8 @@ func (a *Auth) addNewUser(user *model2.User, botLang string, referralID int64) e
 
 	// TODO: refactor accrual system
 
-	baseUser.Balance += model2.AdminSettings.GetParams(botLang).ReferralAmount
-	_, err = dataBase.Exec("UPDATE users SET balance = ?, referral_count = ? WHERE id = ?;",
+	baseUser.Balance += model.AdminSettings.GetParams(botLang).ReferralAmount
+	_, err = dataBase.Exec("UPDATE shazam.users SET balance = $1, referral_count = $2 WHERE id = $3;",
 		baseUser.Balance, baseUser.ReferralCount+1, baseUser.ID)
 	if err != nil {
 		text := "Fatal Err with DB - auth.85 //" + err.Error()
@@ -118,13 +115,13 @@ func (a *Auth) pullReferralID(message *tgbotapi.Message) int64 {
 		return 0
 	}
 
-	linkInfo, err := model2.DecodeLink(a.bot.GetDataBase(), readParams[1])
+	linkInfo, err := model.DecodeLink(a.bot.GetDataBase(), readParams[1])
 	if err != nil || linkInfo == nil {
 		if err != nil {
 			a.msgs.SendNotificationToDeveloper("some err in decode link: "+err.Error(), false)
 		}
 
-		model2.IncomeBySource.WithLabelValues(
+		model.IncomeBySource.WithLabelValues(
 			a.bot.BotLink,
 			a.bot.BotLang,
 			"unknown",
@@ -133,14 +130,14 @@ func (a *Auth) pullReferralID(message *tgbotapi.Message) int64 {
 		return 0
 	}
 
-	if err = a.saveIncomeUser(&model2.IncomeInfo{
+	if err = a.saveIncomeUser(&model.IncomeInfo{
 		UserID: message.From.ID,
 		Source: linkInfo.Source,
 	}); err != nil {
 		a.msgs.SendNotificationToDeveloper("some error in save income info: "+err.Error(), false)
 	}
 
-	model2.IncomeBySource.WithLabelValues(
+	model.IncomeBySource.WithLabelValues(
 		a.bot.BotLink,
 		a.bot.BotLang,
 		linkInfo.Source,
@@ -149,11 +146,11 @@ func (a *Auth) pullReferralID(message *tgbotapi.Message) int64 {
 	return linkInfo.ReferralID
 }
 
-func (a *Auth) saveIncomeUser(info *model2.IncomeInfo) error {
+func (a *Auth) saveIncomeUser(info *model.IncomeInfo) error {
 	_, err := a.bot.GetDataBase().Exec(`
 INSERT INTO 
-	income_info(user_id, source)
-VALUES(?, ?);`,
+	shazam.income_info(user_id, source)
+VALUES($1, $2);`,
 		info.UserID,
 		info.Source)
 	if err != nil {
@@ -163,8 +160,8 @@ VALUES(?, ?);`,
 	return nil
 }
 
-func createSimpleUser(lang string, message *tgbotapi.Message) *model2.User {
-	return &model2.User{
+func createSimpleUser(lang string, message *tgbotapi.Message) *model.User {
+	return &model.User{
 		ID:            message.From.ID,
 		Language:      lang,
 		AdvertChannel: rand.Intn(3) + 1,
@@ -172,7 +169,7 @@ func createSimpleUser(lang string, message *tgbotapi.Message) *model2.User {
 	}
 }
 
-func (a *Auth) GetUser(id int64) (*model2.User, error) {
+func (a *Auth) GetUser(id int64) (*model.User, error) {
 	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(getUsersUserQuery, id)
 	if err != nil {
@@ -181,18 +178,18 @@ func (a *Auth) GetUser(id int64) (*model2.User, error) {
 
 	users, err := a.ReadUsers(rows)
 	if err != nil || len(users) == 0 {
-		return nil, model2.ErrUserNotFound
+		return nil, model.ErrUserNotFound
 	}
 	return users[0], nil
 }
 
-func (a *Auth) ReadUsers(rows *sql.Rows) ([]*model2.User, error) {
+func (a *Auth) ReadUsers(rows *sql.Rows) ([]*model.User, error) {
 	defer rows.Close()
 
-	var users []*model2.User
+	var users []*model.User
 
 	for rows.Next() {
-		user := &model2.User{}
+		user := &model.User{}
 
 		if err := rows.Scan(
 			&user.ID,

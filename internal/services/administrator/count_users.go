@@ -80,7 +80,7 @@ func (a *Admin) countReferrals(botLang string, amountUsers int) string {
 
 func (a *Admin) countBlockedUsers(botLang string) int {
 	rows, err := model.Bots[botLang].DataBase.Query(`
-SELECT COUNT(DISTINCT id) FROM users WHERE status = 'deleted';`)
+SELECT COUNT(DISTINCT id) FROM shazam.users WHERE status = 'deleted';`)
 	if err != nil {
 		a.msgs.SendNotificationToDeveloper(err.Error(), false)
 		return 0

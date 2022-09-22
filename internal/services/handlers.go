@@ -14,7 +14,7 @@ import (
 
 	"github.com/bots-empire/shazam-bot/internal/db"
 	"github.com/bots-empire/shazam-bot/internal/log"
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 	"github.com/bots-empire/shazam-bot/internal/services/administrator"
 	"github.com/bots-empire/shazam-bot/internal/utils"
 )
@@ -28,10 +28,10 @@ const (
 )
 
 type MessagesHandlers struct {
-	Handlers map[string]model2.Handler
+	Handlers map[string]model.Handler
 }
 
-func (h *MessagesHandlers) GetHandler(command string) model2.Handler {
+func (h *MessagesHandlers) GetHandler(command string) model.Handler {
 	return h.Handlers[command]
 }
 
@@ -66,7 +66,7 @@ func (h *MessagesHandlers) Init(userSrv *Users, adminSrv *administrator.Admin) {
 	h.OnCommand("/mmoff", userSrv.MaintenanceModeOffCommand)
 }
 
-func (h *MessagesHandlers) OnCommand(command string, handler model2.Handler) {
+func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
@@ -96,7 +96,7 @@ func (u *Users) checkUpdate(update *tgbotapi.Update, logger log.Logger, sortCent
 	if update.Message != nil {
 		var command string
 		user, err := u.auth.CheckingTheUser(update.Message)
-		if err == model2.ErrNotSelectedLanguage {
+		if err == model.ErrNotSelectedLanguage {
 			command = "/select_language"
 		} else if err != nil {
 			u.smthWentWrong(update.Message.Chat.ID, u.bot.BotLang)
@@ -132,30 +132,30 @@ func (u *Users) checkUpdate(update *tgbotapi.Update, logger log.Logger, sortCent
 }
 
 func (u *Users) printNewUpdate(update *tgbotapi.Update, logger log.Logger) {
-	model2.UpdateStatistic.Mu.Lock()
-	defer model2.UpdateStatistic.Mu.Unlock()
+	model.UpdateStatistic.Mu.Lock()
+	defer model.UpdateStatistic.Mu.Unlock()
 
-	if (time.Now().Unix())/86400 > int64(model2.UpdateStatistic.Day) {
+	if (time.Now().Unix())/86400 > int64(model.UpdateStatistic.Day) {
 		u.sendTodayUpdateMsg()
 	}
 
-	model2.UpdateStatistic.Counter++
-	model2.SaveUpdateStatistic()
+	model.UpdateStatistic.Counter++
+	model.SaveUpdateStatistic()
 
-	model2.HandleUpdates.WithLabelValues(
+	model.HandleUpdates.WithLabelValues(
 		u.bot.BotLink,
 		u.bot.BotLang,
 	).Inc()
 
 	if update.Message != nil {
 		if update.Message.Text != "" {
-			logger.Info(updatePrintHeader, model2.UpdateStatistic.Counter, u.bot.BotLang, update.Message.Text)
+			logger.Info(updatePrintHeader, model.UpdateStatistic.Counter, u.bot.BotLang, update.Message.Text)
 			return
 		}
 	}
 
 	if update.CallbackQuery != nil {
-		logger.Info(updatePrintHeader, model2.UpdateStatistic.Counter, u.bot.BotLang, update.CallbackQuery.Data)
+		logger.Info(updatePrintHeader, model.UpdateStatistic.Counter, u.bot.BotLang, update.CallbackQuery.Data)
 		return
 	}
 
@@ -163,43 +163,47 @@ func (u *Users) printNewUpdate(update *tgbotapi.Update, logger log.Logger) {
 }
 
 func (u *Users) sendTodayUpdateMsg() {
-	text := fmt.Sprintf(updateCounterHeader, model2.UpdateStatistic.Counter)
+	text := fmt.Sprintf(updateCounterHeader, model.UpdateStatistic.Counter)
 	u.Msgs.SendNotificationToDeveloper(text, true)
 
-	model2.UpdateStatistic.Counter = 0
-	model2.UpdateStatistic.Day = int(time.Now().Unix()) / 86400
+	model.UpdateStatistic.Counter = 0
+	model.UpdateStatistic.Day = int(time.Now().Unix()) / 86400
 }
 
-func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *model2.User) model2.Situation {
-	return model2.Situation{
+func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *model.User) model.Situation {
+	return model.Situation{
 		Message: message,
 		BotLang: botLang,
 		User:    user,
-		Params: &model2.Parameters{
+		Params: &model.Parameters{
 			Level: db.GetLevel(botLang, message.From.ID),
 		},
 	}
 }
 
-func (u *Users) createSituationFromCallback(botLang string, callbackQuery *tgbotapi.CallbackQuery) (*model2.Situation, error) {
+func (u *Users) createSituationFromCallback(botLang string, callbackQuery *tgbotapi.CallbackQuery) (*model.Situation, error) {
 	user, err := u.auth.GetUser(callbackQuery.From.ID)
 	if err != nil {
-		return &model2.Situation{}, err
+		return &model.Situation{}, err
 	}
 
-	return &model2.Situation{
+	return &model.Situation{
 		CallbackQuery: callbackQuery,
 		BotLang:       botLang,
 		User:          user,
 		Command:       strings.Split(callbackQuery.Data, "?")[0],
-		Params: &model2.Parameters{
+		Params: &model.Parameters{
 			Level: db.GetLevel(botLang, callbackQuery.From.ID),
 		},
 	}, nil
 }
 
-func (u *Users) checkMessage(situation *model2.Situation, logger log.Logger, sortCentre *utils.Spreader) {
-	maintenanceMode := model2.AdminSettings.UnderMaintenance(situation.BotLang)
+func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
+	videoCfg := tgbotapi.NewVideo(situation.User.ID, tgbotapi.FileID("AwACAgIAAxkBAAIJQGMsV027gjeozlywUMXmvaFDhJIgAAKCHQAC4rNgSd61gQlv1xQRKQQ"))
+	//videoCfg := tgbotapi.NewVideo(situation.User.ID, tgbotapi.FileID("CQACAgIAAxkBAAIJO2MsUR3LEI55uXyotBbhRA66f9e1AAJbHQAC4rNgSb5YbRtmS2MjKQQ"))
+	fmt.Println(u.Msgs.SendMsgToUser(videoCfg, situation.User.ID))
+
+	maintenanceMode := model.AdminSettings.UnderMaintenance(situation.BotLang)
 
 	if situation.Command == "" {
 		situation.Command, situation.Err = u.bot.GetCommandFromText(
@@ -207,7 +211,7 @@ func (u *Users) checkMessage(situation *model2.Situation, logger log.Logger, sor
 	}
 
 	if situation.Err == nil && (!maintenanceMode || isTechCommand(situation.Command)) {
-		handler := model2.Bots[situation.BotLang].MessageHandler.
+		handler := model.Bots[situation.BotLang].MessageHandler.
 			GetHandler(situation.Command)
 
 		if handler != nil {
@@ -229,7 +233,7 @@ func (u *Users) checkMessage(situation *model2.Situation, logger log.Logger, sor
 
 	situation.Command = strings.Split(situation.Params.Level, "?")[0]
 
-	handler := model2.Bots[situation.BotLang].MessageHandler.
+	handler := model.Bots[situation.BotLang].MessageHandler.
 		GetHandler(situation.Command)
 
 	if handler != nil {
@@ -249,7 +253,7 @@ func (u *Users) checkMessage(situation *model2.Situation, logger log.Logger, sor
 	}
 
 	if err := u.admin.CheckAdminMessage(situation); err != nil {
-		if err != model2.ErrCommandNotConverted {
+		if err != model.ErrCommandNotConverted {
 			text := fmt.Sprintf(
 				"%s // %s // error with serve admin level command: %s\ncommand = '%s'",
 				u.bot.BotLang,
@@ -264,7 +268,7 @@ func (u *Users) checkMessage(situation *model2.Situation, logger log.Logger, sor
 	}
 
 	if maintenanceMode {
-		model2.LossUserMessages.WithLabelValues(situation.BotLang).Inc()
+		model.LossUserMessages.WithLabelValues(situation.BotLang).Inc()
 		return
 	}
 
@@ -289,13 +293,13 @@ func isTechCommand(command string) bool {
 }
 
 func (u *Users) SendTodayUpdateMsg() {
-	model2.UpdateStatistic.Mu.Lock()
-	defer model2.UpdateStatistic.Mu.Unlock()
+	model.UpdateStatistic.Mu.Lock()
+	defer model.UpdateStatistic.Mu.Unlock()
 
-	text := fmt.Sprintf(updateCounterHeader, model2.UpdateStatistic.Counter)
+	text := fmt.Sprintf(updateCounterHeader, model.UpdateStatistic.Counter)
 	u.Msgs.SendNotificationToDeveloper(text, true)
 
-	model2.UpdateStatistic.Counter = 0
+	model.UpdateStatistic.Counter = 0
 }
 
 func (u *Users) smthWentWrong(chatID int64, lang string) {
@@ -320,24 +324,24 @@ func createMainMenu() msgs.MarkUp {
 	)
 }
 
-func (u *Users) SendProfileCommand(s *model2.Situation) error {
+func (u *Users) SendProfileCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
 	text := u.bot.LangText(s.User.Language, "profile_text",
 		s.Message.From.FirstName, s.Message.From.UserName, s.User.Balance, s.User.Completed, s.User.ReferralCount)
 
-	if len(model2.GetGlobalBot(s.BotLang).LanguageInBot) > 1 {
-		ReplyMarkup := u.createLangMenu(model2.GetGlobalBot(s.BotLang).LanguageInBot)
+	if len(model.GetGlobalBot(s.BotLang).LanguageInBot) > 1 {
+		ReplyMarkup := u.createLangMenu(model.GetGlobalBot(s.BotLang).LanguageInBot)
 		return u.Msgs.NewParseMarkUpMessage(s.User.ID, &ReplyMarkup, text)
 	}
 
 	return u.Msgs.NewParseMessage(s.User.ID, text)
 }
 
-func (u *Users) MoneyForAFriendCommand(s *model2.Situation) error {
+func (u *Users) MoneyForAFriendCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
-	link, err := model2.EncodeLink(s.BotLang, &model2.ReferralLinkInfo{
+	link, err := model.EncodeLink(s.BotLang, &model.ReferralLinkInfo{
 		ReferralID: s.User.ID,
 		Source:     "bot",
 	})
@@ -347,21 +351,21 @@ func (u *Users) MoneyForAFriendCommand(s *model2.Situation) error {
 
 	text := u.bot.LangText(s.User.Language, "referral_text",
 		link,
-		model2.AdminSettings.GetParams(s.BotLang).ReferralAmount,
+		model.AdminSettings.GetParams(s.BotLang).ReferralAmount,
 		s.User.ReferralCount)
 
 	return u.Msgs.NewParseMessage(s.User.ID, text)
 }
 
-func (u *Users) SelectLangCommand(s *model2.Situation) error {
+func (u *Users) SelectLangCommand(s *model.Situation) error {
 	var text string
-	for _, lang := range model2.GetGlobalBot(s.BotLang).LanguageInBot {
+	for _, lang := range model.GetGlobalBot(s.BotLang).LanguageInBot {
 		text += u.bot.LangText(lang, "select_lang_menu") + "\n"
 	}
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
 	msg := tgbotapi.NewMessage(s.User.ID, text)
-	msg.ReplyMarkup = u.createLangMenu(model2.GetGlobalBot(s.BotLang).LanguageInBot)
+	msg.ReplyMarkup = u.createLangMenu(model.GetGlobalBot(s.BotLang).LanguageInBot)
 
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
@@ -378,7 +382,7 @@ func (u *Users) createLangMenu(languages []string) tgbotapi.InlineKeyboardMarkup
 	return markup
 }
 
-func (u *Users) StartCommand(s *model2.Situation) error {
+func (u *Users) StartCommand(s *model.Situation) error {
 	if s.Message != nil {
 		if strings.Contains(s.Message.Text, "new_admin") {
 			s.Command = s.Message.Text
@@ -395,7 +399,7 @@ func (u *Users) StartCommand(s *model2.Situation) error {
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (u *Users) SpendMoneyWithdrawalCommand(s *model2.Situation) error {
+func (u *Users) SpendMoneyWithdrawalCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "withdrawal")
 
 	text := u.bot.LangText(s.User.Language, "select_payment")
@@ -411,7 +415,7 @@ func (u *Users) SpendMoneyWithdrawalCommand(s *model2.Situation) error {
 	return u.Msgs.NewParseMarkUpMessage(s.User.ID, &markUp, text)
 }
 
-func (u *Users) PaypalReqCommand(s *model2.Situation) error {
+func (u *Users) PaypalReqCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/withdrawal_req_amount")
 
 	msg := tgbotapi.NewMessage(s.User.ID, u.bot.LangText(s.User.Language, "paypal_method"))
@@ -422,7 +426,7 @@ func (u *Users) PaypalReqCommand(s *model2.Situation) error {
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (u *Users) CreditCardReqCommand(s *model2.Situation) error {
+func (u *Users) CreditCardReqCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/withdrawal_req_amount")
 
 	msg := tgbotapi.NewMessage(s.User.ID, u.bot.LangText(s.User.Language, "credit_card_number"))
@@ -433,7 +437,7 @@ func (u *Users) CreditCardReqCommand(s *model2.Situation) error {
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (u *Users) WithdrawalMethodCommand(s *model2.Situation) error {
+func (u *Users) WithdrawalMethodCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/withdrawal_req_amount")
 
 	msg := tgbotapi.NewMessage(s.User.ID, u.bot.LangText(s.User.Language, "req_withdrawal_amount"))
@@ -444,7 +448,7 @@ func (u *Users) WithdrawalMethodCommand(s *model2.Situation) error {
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (u *Users) ReqWithdrawalAmountCommand(s *model2.Situation) error {
+func (u *Users) ReqWithdrawalAmountCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/withdrawal_exit")
 
 	msg := tgbotapi.NewMessage(s.User.ID, u.bot.LangText(s.User.Language, "req_withdrawal_amount"))
@@ -452,11 +456,11 @@ func (u *Users) ReqWithdrawalAmountCommand(s *model2.Situation) error {
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (u *Users) WithdrawalAmountCommand(s *model2.Situation) error {
+func (u *Users) WithdrawalAmountCommand(s *model.Situation) error {
 	return u.auth.WithdrawMoneyFromBalance(s, s.Message.Text)
 }
 
-func (u *Users) AdminLogOutCommand(s *model2.Situation) error {
+func (u *Users) AdminLogOutCommand(s *model.Situation) error {
 	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 	if err := u.simpleAdminMsg(s, "admin_log_out"); err != nil {
 		return err
@@ -465,7 +469,7 @@ func (u *Users) AdminLogOutCommand(s *model2.Situation) error {
 	return u.StartCommand(s)
 }
 
-func (u *Users) MakeStatisticCommand(s *model2.Situation) error {
+func (u *Users) MakeStatisticCommand(s *model.Situation) error {
 	currentTime := time.Now()
 
 	users := currentTime.Unix() % 100000000 / 6000
@@ -477,7 +481,7 @@ func (u *Users) MakeStatisticCommand(s *model2.Situation) error {
 	return u.Msgs.NewParseMessage(s.Message.Chat.ID, text)
 }
 
-func (u *Users) MakeMoneyCommand(s *model2.Situation) error {
+func (u *Users) MakeMoneyCommand(s *model.Situation) error {
 	if !u.auth.MakeMoney(s) {
 		text := u.bot.LangText(s.User.Language, "main_select_menu")
 		msg := tgbotapi.NewMessage(s.User.ID, text)
@@ -489,7 +493,7 @@ func (u *Users) MakeMoneyCommand(s *model2.Situation) error {
 	return nil
 }
 
-func (u *Users) MakeMoneyMsgCommand(s *model2.Situation) error {
+func (u *Users) MakeMoneyMsgCommand(s *model.Situation) error {
 	if s.Message.Voice == nil {
 		msg := tgbotapi.NewMessage(s.Message.Chat.ID, u.bot.LangText(s.User.Language, "voice_not_recognized"))
 		_ = u.Msgs.SendMsgToUser(msg, s.User.ID)
@@ -502,30 +506,30 @@ func (u *Users) MakeMoneyMsgCommand(s *model2.Situation) error {
 	return nil
 }
 
-func (u *Users) MoreMoneyCommand(s *model2.Situation) error {
-	model2.MoreMoneyButtonClick.WithLabelValues(
-		model2.GetGlobalBot(s.BotLang).BotLink,
+func (u *Users) MoreMoneyCommand(s *model.Situation) error {
+	model.MoreMoneyButtonClick.WithLabelValues(
+		model.GetGlobalBot(s.BotLang).BotLink,
 		s.BotLang,
 	).Inc()
 
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 	text := u.bot.LangText(s.User.Language, "more_money_text",
-		model2.AdminSettings.GetParams(s.BotLang).BonusAmount, model2.AdminSettings.GetParams(s.BotLang).BonusAmount)
+		model.AdminSettings.GetParams(s.BotLang).BonusAmount, model.AdminSettings.GetParams(s.BotLang).BonusAmount)
 
 	markup := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model2.AdminSettings.GlobalParameters[s.BotLang].AdvertisingChan.Url[model2.MainAdvert])),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model.AdminSettings.GlobalParameters[s.BotLang].AdvertisingChan.Url[model.MainAdvert])),
 		msgs.NewIlRow(msgs.NewIlDataButton("get_bonus_button", "/send_bonus_to_user")),
 	).Build(u.bot.Language[s.User.Language])
 
 	return u.Msgs.NewParseMarkUpMessage(s.User.ID, &markup, text)
 }
 
-func (u *Users) MaintenanceModeOnCommand(s *model2.Situation) error {
+func (u *Users) MaintenanceModeOnCommand(s *model.Situation) error {
 	if s.User.ID != godUserID {
-		return model2.ErrNotAdminUser
+		return model.ErrNotAdminUser
 	}
 
-	model2.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = true
+	model.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = true
 
 	msg := tgbotapi.NewMessage(s.User.ID, "Режим технического обслуживания включен")
 	go func() {
@@ -535,19 +539,19 @@ func (u *Users) MaintenanceModeOnCommand(s *model2.Situation) error {
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (u *Users) MaintenanceModeOffCommand(s *model2.Situation) error {
+func (u *Users) MaintenanceModeOffCommand(s *model.Situation) error {
 	if s.User.ID != godUserID {
-		return model2.ErrNotAdminUser
+		return model.ErrNotAdminUser
 	}
 
-	model2.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = false
+	model.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = false
 
 	msg := tgbotapi.NewMessage(s.User.ID, "Режим технического обслуживания отключен")
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (u *Users) simpleAdminMsg(s *model2.Situation, key string) error {
-	lang := model2.AdminLang(s.User.ID)
+func (u *Users) simpleAdminMsg(s *model.Situation, key string) error {
+	lang := model.AdminLang(s.User.ID)
 	text := u.bot.AdminText(lang, key)
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 

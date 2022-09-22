@@ -11,6 +11,7 @@ import (
 	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -177,13 +178,13 @@ func (b *GlobalBot) AdvertisingChoice(channel int) string {
 
 func (b *GlobalBot) BlockUser(userID int64) error {
 	_, err := b.GetDataBase().Exec(`
-UPDATE users
-	SET status = ?
-WHERE id = ?`,
+UPDATE shazam.users
+	SET status = $1
+WHERE id = $2`,
 		statusDeleted,
 		userID)
 
-	return err
+	return errors.Wrap(err, "failed block user")
 }
 
 func (b *GlobalBot) GetMetrics(metricKey string) *prometheus.CounterVec {
