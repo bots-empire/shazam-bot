@@ -272,8 +272,8 @@ func (a *Admin) MusicTask(s *model.Situation) error {
 		return errors.Wrap(err, "failed to parse operation complete music tasks")
 	}
 
-	s.Command = "admin/advertisement"
-	return a.AdvertisementMenuCommand(s)
+	s.Command = "admin/make_money_setting"
+	return a.MakeMoneySettingCommand(s)
 }
 
 func (a *Admin) DeleteTask(s *model.Situation) error {
@@ -288,5 +288,6 @@ func (a *Admin) DeleteTask(s *model.Situation) error {
 		return errors.Wrap(err, "failed to parse operation complete delete tasks")
 	}
 
-	return a.AdvertisementMenuCommand(s)
+	s.Command = "admin/make_money_setting"
+	return a.MakeMoneySettingCommand(s)
 }

@@ -594,6 +594,7 @@ func (a *Admin) GetTasks(s *model.Situation) error {
 				File: tgbotapi.FileID(tasks[i].FileID),
 			},
 			ParseMode: "HTML",
+			Caption:   a.adminFormatText(s.User.Language, "file_id", tasks[i].FileID),
 		}
 
 		err := a.msgs.SendMsgToUser(msg, s.User.ID)
