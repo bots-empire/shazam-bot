@@ -2,6 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS shazam.tasks
 (
+    id              SERIAL,
     file_id         text,
     voice_length    int,
     UNIQUE(file_id)

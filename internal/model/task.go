@@ -8,6 +8,7 @@ import (
 )
 
 type ShazamTask struct {
+	ID          int
 	FileID      string
 	VoiceLength int
 }
@@ -48,6 +49,7 @@ func readTasks(rows *sql.Rows) ([]*ShazamTask, error) {
 		task := &ShazamTask{}
 
 		if err := rows.Scan(
+			&task.ID,
 			&task.FileID,
 			&task.VoiceLength); err != nil {
 			return nil, err
