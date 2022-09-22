@@ -3,7 +3,7 @@ module github.com/bots-empire/shazam-bot
 go 1.18
 
 require (
-	github.com/bots-empire/base-bot v1.0.6-0.20220922112058-44dc6f08df92
+	github.com/bots-empire/base-bot v1.0.6-0.20220922163508-e5d0950dfaed
 	github.com/fatih/color v1.13.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1

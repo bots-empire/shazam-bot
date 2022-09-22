@@ -291,15 +291,14 @@ func (a *Auth) sendInvitationToRecord(s *model.Situation) error {
 	}
 	db.RdbSetLengthOfTask(s.BotLang, s.User.ID, task.VoiceLength)
 
-	videoCfg := tgbotapi.NewVideo(s.User.ID, tgbotapi.FileID(task.FileID))
 	text := a.bot.LangText(s.User.Language, "invitation_to_record_voice")
-	videoCfg.Caption = strings.Replace(text, assistName, model.GetGlobalBot(s.BotLang).AssistName, -1)
+	text = strings.Replace(text, assistName, model.GetGlobalBot(s.BotLang).AssistName, -1)
 
-	videoCfg.ReplyMarkup = msgs.NewMarkUp(
+	markup := msgs.NewMarkUp(
 		msgs.NewRow(msgs.NewDataButton("back_to_main_menu_button")),
 	).Build(a.bot.AdminLibrary[s.BotLang])
 
-	return a.msgs.SendMsgToUser(videoCfg, s.User.ID)
+	return a.msgs.NewParseMarkUpVoiceMessage(s.User.ID, markup, text, tgbotapi.FileID(task.FileID))
 }
 
 func (a *Auth) reachedMaxAmountPerDay(s *model.Situation) error {

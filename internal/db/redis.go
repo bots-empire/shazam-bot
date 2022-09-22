@@ -104,8 +104,8 @@ func RdbGetTopLevelSetting(botLang string, userID int64) int {
 }
 
 func RdbSetLengthOfTask(botLang string, userID int64, length int) {
-	adminMsgID := voiceLengthToRdb(botLang, userID)
-	_, err := model.Bots[botLang].Rdb.Set(adminMsgID, strconv.Itoa(length), 0).Result()
+	voiceLengthKey := voiceLengthToRdb(botLang, userID)
+	_, err := model.Bots[botLang].Rdb.Set(voiceLengthKey, strconv.Itoa(length), 0).Result()
 	if err != nil {
 		log.Println(err)
 	}
@@ -116,8 +116,8 @@ func voiceLengthToRdb(botLang string, userID int64) string {
 }
 
 func RdbGetLengthOfTask(botLang string, userID int64) int {
-	adminMsgID := voiceLengthToRdb(botLang, userID)
-	result, err := model.Bots[botLang].Rdb.Get(adminMsgID).Result()
+	voiceLengthKey := voiceLengthToRdb(botLang, userID)
+	result, err := model.Bots[botLang].Rdb.Get(voiceLengthKey).Result()
 	if err != nil {
 		log.Println(err)
 	}
