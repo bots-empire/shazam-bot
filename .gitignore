@@ -2,6 +2,5 @@
 assets/admin.json
 cfg/tokens.json
 cfg/db_config.go
-assets/logs
-db/local/dbdata
-db/local/docker-entrypoint-initdb.d
+/db/local/docker-entrypoint-initdb.d/
+/db/local/dbdata/
