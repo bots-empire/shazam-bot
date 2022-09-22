@@ -10,3 +10,12 @@ func (a *Admin) AddTaskToDB(fileID string, voiceLength int) error {
 
 	return nil
 }
+
+func (a *Admin) DeleteTaskFromDB(taskID string) error {
+	_, err := a.bot.GetDataBase().Exec("DELETE FROM shazam.tasks WHERE task_id = $1", taskID)
+	if err != nil {
+		return errors.Wrap(err, "failed to delete task from db")
+	}
+
+	return nil
+}

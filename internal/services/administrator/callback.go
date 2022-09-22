@@ -37,8 +37,6 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	//Make Money Setting command
 	h.OnCommand("/make_money_setting", adminSrv.MakeMoneySettingCommand)
 	h.OnCommand("/make_money", adminSrv.ChangeParameterCommand)
-	h.OnCommand("/add_task", adminSrv.AddTask)
-	h.OnCommand("/get_all_tasks", adminSrv.GetTasks)
 
 	//Mailing command
 	h.OnCommand("/advertisement", adminSrv.AdvertisementMenuCommand)
@@ -56,6 +54,11 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/mailing_menu", adminSrv.MailingMenuCommand)
 	h.OnCommand("/send_advertisement", adminSrv.SelectedLangCommand)
 	h.OnCommand("/start_mailing", adminSrv.StartMailingCommand)
+
+	//shazam
+	h.OnCommand("/delete_task_with_id", adminSrv.DeleteTaskWithID)
+	h.OnCommand("/add_task", adminSrv.AddTask)
+	h.OnCommand("/get_all_tasks", adminSrv.GetTasks)
 
 	//Send Statistic command
 	h.OnCommand("/send_statistic", adminSrv.StatisticCommand)
@@ -583,7 +586,7 @@ func (a *Admin) GetTasks(s *model.Situation) error {
 	}
 
 	for i := range tasks {
-		msg := tgbotapi.AudioConfig{
+		msg := tgbotapi.VoiceConfig{
 			BaseFile: tgbotapi.BaseFile{
 				BaseChat: tgbotapi.BaseChat{
 					ChatID: s.User.ID,
@@ -600,4 +603,11 @@ func (a *Admin) GetTasks(s *model.Situation) error {
 	}
 
 	return nil
+}
+
+func (a *Admin) DeleteTaskWithID(s *model.Situation) error {
+	text := a.adminFormatText(a.bot.AdminLang(s.User.ID), "write_task_id")
+	db.RdbSetUser(s.User.Language, s.User.ID, "/delete_task")
+
+	return a.msgs.NewParseMessage(s.User.ID, text)
 }

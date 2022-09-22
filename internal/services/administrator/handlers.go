@@ -29,7 +29,10 @@ func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/change_text_url", adminSrv.SetNewTextUrlCommand)
 	h.OnCommand("/advertisement_setting", adminSrv.AdvertisementSettingCommand)
 	h.OnCommand("/get_new_source", adminSrv.GetNewSourceCommand)
+
+	//shazam
 	h.OnCommand("/music_task", adminSrv.MusicTask)
+	h.OnCommand("/delete_task", adminSrv.DeleteTask)
 }
 
 func (h *AdminMessagesHandlers) OnCommand(command string, handler model.Handler) {
@@ -264,6 +267,26 @@ func (a *Admin) MusicTask(s *model.Situation) error {
 	}
 
 	text := a.bot.AdminText(model.AdminLang(s.User.ID), "operation_completed")
+	err = a.msgs.NewParseMessage(s.User.ID, text)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse operation complete music tasks")
+	}
 
-	return a.msgs.NewParseMessage(s.User.ID, text)
+	s.Command = "admin/advertisement"
+	return a.AdvertisementMenuCommand(s)
+}
+
+func (a *Admin) DeleteTask(s *model.Situation) error {
+	err := a.DeleteTaskFromDB(s.Message.Text)
+	if err != nil {
+		return errors.Wrap(err, "task failed to delete")
+	}
+
+	text := a.bot.AdminText(model.AdminLang(s.User.ID), "operation_completed")
+	err = a.msgs.NewParseMessage(s.User.ID, text)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse operation complete delete tasks")
+	}
+
+	return a.AdvertisementMenuCommand(s)
 }
