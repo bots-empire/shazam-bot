@@ -8,14 +8,14 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"github.com/bots-empire/shazam-bot/internal/db"
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 )
 
 type AdminMessagesHandlers struct {
-	Handlers map[string]model2.Handler
+	Handlers map[string]model.Handler
 }
 
-func (h *AdminMessagesHandlers) GetHandler(command string) model2.Handler {
+func (h *AdminMessagesHandlers) GetHandler(command string) model.Handler {
 	return h.Handlers[command]
 }
 
@@ -30,18 +30,18 @@ func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/get_new_source", adminSrv.GetNewSourceCommand)
 }
 
-func (h *AdminMessagesHandlers) OnCommand(command string, handler model2.Handler) {
+func (h *AdminMessagesHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
-func (a *Admin) CheckAdminMessage(s *model2.Situation) error {
+func (a *Admin) CheckAdminMessage(s *model.Situation) error {
 	if !ContainsInAdmin(s.User.ID) {
 		return a.notAdmin(s.User)
 	}
 
 	s.Command, s.Err = a.bot.GetCommandFromText(s.Message, s.User.Language, s.User.ID)
 	if s.Err == nil {
-		Handler := model2.Bots[s.BotLang].AdminMessageHandler.
+		Handler := model.Bots[s.BotLang].AdminMessageHandler.
 			GetHandler(s.Command)
 
 		if Handler != nil {
@@ -51,7 +51,7 @@ func (a *Admin) CheckAdminMessage(s *model2.Situation) error {
 
 	s.Command = strings.TrimLeft(strings.Split(s.Params.Level, "?")[0], "admin")
 
-	Handler := model2.Bots[s.BotLang].AdminMessageHandler.
+	Handler := model.Bots[s.BotLang].AdminMessageHandler.
 		GetHandler(s.Command)
 
 	if Handler != nil {
@@ -62,10 +62,10 @@ func (a *Admin) CheckAdminMessage(s *model2.Situation) error {
 		return nil
 	}
 
-	return model2.ErrCommandNotConverted
+	return model.ErrCommandNotConverted
 }
 
-func (a *Admin) checkIncomeInfo(s *model2.Situation) bool {
+func (a *Admin) checkIncomeInfo(s *model.Situation) bool {
 	if s.Message == nil {
 		return false
 	}
@@ -74,7 +74,7 @@ func (a *Admin) checkIncomeInfo(s *model2.Situation) bool {
 		return false
 	}
 
-	lang := model2.AdminLang(s.User.ID)
+	lang := model.AdminLang(s.User.ID)
 
 	info, err := a.getIncomeInfo(s.Message.ForwardFrom.ID)
 	if err != nil {
@@ -96,8 +96,8 @@ func (a *Admin) checkIncomeInfo(s *model2.Situation) bool {
 	return true
 }
 
-func (a *Admin) RemoveAdminCommand(s *model2.Situation) error {
-	lang := model2.AdminLang(s.User.ID)
+func (a *Admin) RemoveAdminCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
 	adminId, err := strconv.ParseInt(s.Message.Text, 10, 64)
 	if err != nil {
 		text := a.bot.AdminText(lang, "incorrect_admin_id_text")
@@ -110,8 +110,8 @@ func (a *Admin) RemoveAdminCommand(s *model2.Situation) error {
 
 	}
 
-	delete(model2.AdminSettings.AdminID, adminId)
-	model2.SaveAdminSettings()
+	delete(model.AdminSettings.AdminID, adminId)
+	model.SaveAdminSettings()
 	if err := a.setAdminBackButton(s.User.ID, "admin_removed_status"); err != nil {
 		return err
 	}
@@ -123,11 +123,11 @@ func (a *Admin) RemoveAdminCommand(s *model2.Situation) error {
 }
 
 func checkAdminIDInTheList(adminID int64) bool {
-	_, inMap := model2.AdminSettings.AdminID[adminID]
+	_, inMap := model.AdminSettings.AdminID[adminID]
 	return inMap
 }
 
-func (a *Admin) UpdateParameterCommand(s *model2.Situation) error {
+func (a *Admin) UpdateParameterCommand(s *model.Situation) error {
 	if strings.Contains(s.Params.Level, "make_money?") && s.Message.Text == "← Назад к ⚙️ Заработок" {
 		if err := a.setAdminBackButton(s.User.ID, "operation_canceled"); err != nil {
 			return err
@@ -141,7 +141,7 @@ func (a *Admin) UpdateParameterCommand(s *model2.Situation) error {
 	partition := strings.Split(s.Params.Level, "?")[1]
 
 	if partition == currencyType {
-		model2.AdminSettings.UpdateCurrency(s.BotLang, s.Message.Text)
+		model.AdminSettings.UpdateCurrency(s.BotLang, s.Message.Text)
 	} else {
 		err := a.setNewIntParameter(s, partition)
 		if err != nil {
@@ -149,7 +149,7 @@ func (a *Admin) UpdateParameterCommand(s *model2.Situation) error {
 		}
 	}
 
-	model2.SaveAdminSettings()
+	model.SaveAdminSettings()
 	err := a.setAdminBackButton(s.User.ID, "operation_completed")
 	if err != nil {
 		return nil
@@ -160,8 +160,8 @@ func (a *Admin) UpdateParameterCommand(s *model2.Situation) error {
 	return a.MakeMoneySettingCommand(s)
 }
 
-func (a *Admin) setNewIntParameter(s *model2.Situation, partition string) error {
-	lang := model2.AdminLang(s.User.ID)
+func (a *Admin) setNewIntParameter(s *model.Situation, partition string) error {
+	lang := model.AdminLang(s.User.ID)
 
 	newAmount, err := strconv.Atoi(s.Message.Text)
 	if err != nil || newAmount <= 0 {
@@ -171,24 +171,24 @@ func (a *Admin) setNewIntParameter(s *model2.Situation, partition string) error 
 
 	switch partition {
 	case bonusAmount:
-		model2.AdminSettings.UpdateBonusAmount(s.BotLang, newAmount)
+		model.AdminSettings.UpdateBonusAmount(s.BotLang, newAmount)
 	case minWithdrawalAmount:
-		model2.AdminSettings.UpdateMinWithdrawalAmount(s.BotLang, newAmount)
+		model.AdminSettings.UpdateMinWithdrawalAmount(s.BotLang, newAmount)
 	case voiceAmount:
-		model2.AdminSettings.UpdateVoiceAmount(s.BotLang, newAmount)
+		model.AdminSettings.UpdateVoiceAmount(s.BotLang, newAmount)
 	case voicePDAmount:
-		model2.AdminSettings.UpdateMaxOfVoicePerDay(s.BotLang, newAmount)
+		model.AdminSettings.UpdateMaxOfVoicePerDay(s.BotLang, newAmount)
 	case referralAmount:
-		model2.AdminSettings.UpdateReferralAmount(s.BotLang, newAmount)
+		model.AdminSettings.UpdateReferralAmount(s.BotLang, newAmount)
 	}
 
 	return nil
 }
 
-func (a *Admin) SetNewTextUrlCommand(s *model2.Situation) error {
+func (a *Admin) SetNewTextUrlCommand(s *model.Situation) error {
 	capitation := strings.Split(s.Params.Level, "?")[1]
 	channel, _ := strconv.Atoi(strings.Split(s.Params.Level, "?")[2])
-	lang := model2.AdminLang(s.User.ID)
+	lang := model.AdminLang(s.User.ID)
 	status := "operation_canceled"
 
 	switch capitation {
@@ -198,27 +198,27 @@ func (a *Admin) SetNewTextUrlCommand(s *model2.Situation) error {
 			text := a.bot.AdminText(lang, "chat_id_not_update")
 			return a.msgs.NewParseMessage(s.User.ID, text)
 		}
-		model2.AdminSettings.UpdateAdvertChannelID(s.BotLang, chatID, channel)
-		model2.AdminSettings.UpdateAdvertUrl(s.BotLang, channel, url)
-		model2.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = false
+		model.AdminSettings.UpdateAdvertChannelID(s.BotLang, chatID, channel)
+		model.AdminSettings.UpdateAdvertUrl(s.BotLang, channel, url)
+		model.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = false
 	case "change_text":
-		model2.AdminSettings.UpdateAdvertText(s.BotLang, s.Message.Text, channel)
-		model2.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = false
+		model.AdminSettings.UpdateAdvertText(s.BotLang, s.Message.Text, channel)
+		model.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = false
 	case "change_photo":
 		if len(s.Message.Photo) == 0 {
 			text := a.bot.AdminText(lang, "send_only_photo")
 			return a.msgs.NewParseMessage(s.User.ID, text)
 		}
-		model2.AdminSettings.UpdateAdvertPhoto(s.BotLang, channel, s.Message.Photo[0].FileID)
+		model.AdminSettings.UpdateAdvertPhoto(s.BotLang, channel, s.Message.Photo[0].FileID)
 	case "change_video":
 		if s.Message.Video == nil {
 			text := a.bot.AdminText(lang, "send_only_video")
 			return a.msgs.NewParseMessage(s.User.ID, text)
 		}
-		model2.AdminSettings.UpdateAdvertVideo(s.BotLang, channel, s.Message.Video.FileID)
+		model.AdminSettings.UpdateAdvertVideo(s.BotLang, channel, s.Message.Video.FileID)
 	}
 
-	model2.SaveAdminSettings()
+	model.SaveAdminSettings()
 	status = "operation_completed"
 
 	if err := a.setAdminBackButton(s.User.ID, status); err != nil {
@@ -232,7 +232,7 @@ func (a *Admin) SetNewTextUrlCommand(s *model2.Situation) error {
 	return a.AdvertisementMenuCommand(s)
 }
 
-func (a *Admin) AdvertisementSettingCommand(s *model2.Situation) error {
+func (a *Admin) AdvertisementSettingCommand(s *model.Situation) error {
 	s.CallbackQuery = &tgbotapi.CallbackQuery{
 		Data: "admin/change_text_url?",
 	}
@@ -254,7 +254,7 @@ func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
 	return data[1], int64(chatId)
 }
 
-func (a *Admin) MusicTask(s *model2.Situation) error {
+func (a *Admin) MusicTask(s *model.Situation) error {
 	fileID := s.CallbackQuery.Message.Audio.FileID
 	voiceLength := s.CallbackQuery.Message.Audio.Duration
 
@@ -263,5 +263,7 @@ func (a *Admin) MusicTask(s *model2.Situation) error {
 		return errors.Wrap(err, "admin/handlers :")
 	}
 
-	return nil
+	text := a.bot.AdminText(model.AdminLang(s.User.ID), "operation_completed")
+
+	return a.msgs.NewParseMessage(s.User.ID, text)
 }

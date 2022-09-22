@@ -2,6 +2,7 @@ package administrator
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"strconv"
 	"strings"
 
@@ -37,6 +38,7 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/make_money_setting", adminSrv.MakeMoneySettingCommand)
 	h.OnCommand("/make_money", adminSrv.ChangeParameterCommand)
 	h.OnCommand("/add_task", adminSrv.AddTask)
+	h.OnCommand("/get_all_tasks", adminSrv.GetTasks)
 
 	//Mailing command
 	h.OnCommand("/advertisement", adminSrv.AdvertisementMenuCommand)
@@ -562,8 +564,40 @@ func (a *Admin) sendMsgAdnAnswerCallback(s *model.Situation, markUp *tgbotapi.In
 }
 
 func (a *Admin) AddTask(s *model.Situation) error {
-	text := a.adminFormatText(s.User.Language, "to_add_task")
+	text := a.adminFormatText(model.AdminLang(s.User.ID), "to_add_task")
 	db.RdbSetUser(s.User.Language, s.User.ID, "/music_task")
 
 	return a.msgs.NewParseMessage(s.User.ID, text)
+}
+
+func (a *Admin) GetTasks(s *model.Situation) error {
+	tasks, err := model.GetAllTasks(a.bot.GetDataBase())
+	if err != nil {
+		return err
+	}
+
+	text := a.bot.LangText(model.AdminLang(s.User.ID), "all_tasks")
+	err = a.msgs.NewParseMessage(s.User.ID, text)
+	if err != nil {
+		return errors.Wrap(err, "all tasks: failed to parse message")
+	}
+
+	for i := range tasks {
+		msg := tgbotapi.AudioConfig{
+			BaseFile: tgbotapi.BaseFile{
+				BaseChat: tgbotapi.BaseChat{
+					ChatID: s.User.ID,
+				},
+				File: tgbotapi.FileID(tasks[i].FileID),
+			},
+			ParseMode: "HTML",
+		}
+
+		err := a.msgs.SendMsgToUser(msg, s.User.ID)
+		if err != nil {
+			return errors.Wrap(err, "failed to send msg to user")
+		}
+	}
+
+	return nil
 }

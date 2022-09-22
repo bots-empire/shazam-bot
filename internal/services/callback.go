@@ -11,15 +11,15 @@ import (
 
 	"github.com/bots-empire/shazam-bot/internal/db"
 	"github.com/bots-empire/shazam-bot/internal/log"
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	model "github.com/bots-empire/shazam-bot/internal/model"
 	"github.com/bots-empire/shazam-bot/internal/utils"
 )
 
 type CallBackHandlers struct {
-	Handlers map[string]model2.Handler
+	Handlers map[string]model.Handler
 }
 
-func (h *CallBackHandlers) GetHandler(command string) model2.Handler {
+func (h *CallBackHandlers) GetHandler(command string) model.Handler {
 	return h.Handlers[command]
 }
 
@@ -32,11 +32,11 @@ func (h *CallBackHandlers) Init(userSrv *Users) {
 	h.OnCommand("/get_reward", userSrv.GetRewardCommand)
 }
 
-func (h *CallBackHandlers) OnCommand(command string, handler model2.Handler) {
+func (h *CallBackHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
-func (u *Users) checkCallbackQuery(s *model2.Situation, logger log.Logger, sortCentre *utils.Spreader) {
+func (u *Users) checkCallbackQuery(s *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
 	if strings.Contains(s.Params.Level, "admin") {
 		if err := u.admin.CheckAdminCallback(s); err != nil {
 			text := fmt.Sprintf("%s // %s // error with serve admin callback command: %s\ncommand = '%s'",
@@ -52,9 +52,9 @@ func (u *Users) checkCallbackQuery(s *model2.Situation, logger log.Logger, sortC
 		return
 	}
 
-	maintenanceMode := model2.AdminSettings.UnderMaintenance(s.BotLang)
+	maintenanceMode := model.AdminSettings.UnderMaintenance(s.BotLang)
 
-	handler := model2.Bots[s.BotLang].CallbackHandler.
+	handler := model.Bots[s.BotLang].CallbackHandler.
 		GetHandler(s.Command)
 
 	if handler != nil && !maintenanceMode {
@@ -75,7 +75,7 @@ func (u *Users) checkCallbackQuery(s *model2.Situation, logger log.Logger, sortC
 	}
 
 	if maintenanceMode {
-		model2.LossUserMessages.WithLabelValues(s.BotLang).Inc()
+		model.LossUserMessages.WithLabelValues(s.BotLang).Inc()
 		return
 	}
 
@@ -89,7 +89,7 @@ func (u *Users) checkCallbackQuery(s *model2.Situation, logger log.Logger, sortC
 	logger.Warn(text)
 }
 
-func (u *Users) LanguageCommand(s *model2.Situation) error {
+func (u *Users) LanguageCommand(s *model.Situation) error {
 	lang := strings.Split(s.CallbackQuery.Data, "?")[1]
 
 	level := db.GetLevel(s.BotLang, s.User.ID)
@@ -102,11 +102,11 @@ func (u *Users) LanguageCommand(s *model2.Situation) error {
 	return u.StartCommand(s)
 }
 
-func (u *Users) GetBonusCommand(s *model2.Situation) error {
+func (u *Users) GetBonusCommand(s *model.Situation) error {
 	return u.auth.GetABonus(s)
 }
 
-func (u *Users) RecheckSubscribeCommand(s *model2.Situation) error {
+func (u *Users) RecheckSubscribeCommand(s *model.Situation) error {
 	amount := strings.Split(s.CallbackQuery.Data, "?")[1]
 	s.Message = &tgbotapi.Message{
 		Text: amount,
@@ -124,7 +124,7 @@ func (u *Users) RecheckSubscribeCommand(s *model2.Situation) error {
 	return nil
 }
 
-func (u *Users) PromotionCaseCommand(s *model2.Situation) error {
+func (u *Users) PromotionCaseCommand(s *model.Situation) error {
 	cost, err := strconv.Atoi(strings.Split(s.CallbackQuery.Data, "?")[1])
 	if err != nil {
 		return err

@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	model "github.com/bots-empire/shazam-bot/internal/model"
 )
 
 type Spreader struct {
@@ -26,8 +26,8 @@ type block struct {
 }
 
 type condition struct {
-	handler      model2.Handler
-	situation    *model2.Situation
+	handler      model.Handler
+	situation    *model.Situation
 	errorHandler func(error)
 }
 
@@ -76,7 +76,7 @@ func (s *Spreader) collectObsoleteBlocks() {
 	}
 }
 
-func (s *Spreader) ServeHandler(fn model2.Handler, sit *model2.Situation, errHandler func(error)) {
+func (s *Spreader) ServeHandler(fn model.Handler, sit *model.Situation, errHandler func(error)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

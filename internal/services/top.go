@@ -3,7 +3,7 @@ package services
 import (
 	"github.com/bots-empire/base-bot/msgs"
 
-	model2 "github.com/bots-empire/shazam-bot/internal/model"
+	model "github.com/bots-empire/shazam-bot/internal/model"
 )
 
 func (u *Users) TopListPlayers() {
@@ -28,7 +28,7 @@ func (u *Users) TopListPlayers() {
 	}
 }
 
-func (u *Users) TopListPlayerCommand(s *model2.Situation) error {
+func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 	count := u.admin.CountUsers()
 	users, err := u.GetUsers(count)
 	if err != nil {
@@ -81,7 +81,7 @@ func (u *Users) TopListPlayerCommand(s *model2.Situation) error {
 	return nil
 }
 
-func (u *Users) createTopForMailing(users []*model2.User) error {
+func (u *Users) createTopForMailing(users []*model.User) error {
 	top, err := u.GetTop()
 	if err != nil {
 		return err
@@ -125,12 +125,12 @@ func (u *Users) top3PlayersFromMain(id int64, i int, balance int, top3Balance []
 	text := u.bot.LangText(u.bot.LanguageInBot[0], "top_3_players_main",
 		i+1,
 		balance,
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[i],
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[0],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[i],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[0],
 		top3Balance[0],
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[1],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[1],
 		top3Balance[1],
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[2],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[2],
 		top3Balance[2],
 	)
 
@@ -141,12 +141,12 @@ func (u *Users) top3Players(id int64, i int, balance int, top3Balance []int) err
 	text := u.bot.LangText(u.bot.LanguageInBot[0], "top_3_players",
 		i+1,
 		balance,
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[i],
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[0],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[i],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[0],
 		top3Balance[0],
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[1],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[1],
 		top3Balance[1],
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[2],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[2],
 		top3Balance[2],
 	)
 
@@ -157,15 +157,15 @@ func (u *Users) top3Players(id int64, i int, balance int, top3Balance []int) err
 	return u.Msgs.NewParseMarkUpMessage(id, &markUp, text)
 }
 
-func (u *Users) topPlayers(users []*model2.User, i int) error {
+func (u *Users) topPlayers(users []*model.User, i int) error {
 	text := u.bot.LangText(u.bot.LanguageInBot[0], "top_players",
 		i+1,
 		users[0].Balance,
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[0],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[0],
 		users[1].Balance,
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[1],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[1],
 		users[2].Balance,
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[2],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[2],
 		users[i].Balance,
 		i,
 		users[i-1].Balance,
@@ -196,7 +196,7 @@ func (u *Users) updateTop3(id int64, i int, balance int) error {
 	return nil
 }
 
-func (u *Users) GetRewardCommand(s *model2.Situation) error {
+func (u *Users) GetRewardCommand(s *model.Situation) error {
 	var userNum int
 	top, err := u.GetTop()
 	if err != nil {
@@ -215,7 +215,7 @@ func (u *Users) GetRewardCommand(s *model2.Situation) error {
 	}
 
 	err = u.UpdateTop3Balance(s.User.ID,
-		balance+model2.AdminSettings.GlobalParameters[s.BotLang].Parameters.TopReward[userNum])
+		balance+model.AdminSettings.GlobalParameters[s.BotLang].Parameters.TopReward[userNum])
 	if err != nil {
 		return err
 	}
@@ -225,11 +225,11 @@ func (u *Users) GetRewardCommand(s *model2.Situation) error {
 		"top_3_players_reward_taken",
 		userNum+1,
 		s.User.Balance,
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[0],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[0],
 		top[0].Balance,
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[1],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[1],
 		top[1].Balance,
-		model2.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[2],
+		model.AdminSettings.GlobalParameters[u.bot.LanguageInBot[0]].Parameters.TopReward[2],
 		top[2].Balance,
 	))
 	if err != nil {
