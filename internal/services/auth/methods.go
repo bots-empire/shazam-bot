@@ -289,6 +289,7 @@ func (a *Auth) sendInvitationToRecord(s *model.Situation) error {
 	if err != nil {
 		return errors.Wrap(err, "get task")
 	}
+	db.RdbSetLengthOfTask(s.BotLang, s.User.ID, task.VoiceLength)
 
 	videoCfg := tgbotapi.NewVideo(s.User.ID, tgbotapi.FileID(task.FileID))
 	text := a.bot.LangText(s.User.Language, "invitation_to_record_voice")
