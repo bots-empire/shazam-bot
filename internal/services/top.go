@@ -18,7 +18,7 @@ func (u *Users) TopListPlayers() {
 	}
 
 	if len(users) < 3 {
-		u.Msgs.SendNotificationToDeveloper("failed to get users: ", false)
+		u.Msgs.SendNotificationToDeveloper("failed to get users: users count < 3", false)
 		return
 	}
 
@@ -36,7 +36,7 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 	}
 
 	if len(users) < 3 {
-		u.Msgs.SendNotificationToDeveloper("failed to get users: ", false)
+		u.Msgs.SendNotificationToDeveloper("failed to get users: users count < 3", false)
 		return nil
 	}
 

@@ -3,9 +3,8 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_DB: shazam-service
-      POSTGRES_USER: shazam-user
-#      POSTGRES_PASSWORD: ''
+      POSTGRES_DB: shazam-root-db
+      POSTGRES_USER: shazam-root
       POSTGRES_HOST_AUTH_METHOD: "trust"
       PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:

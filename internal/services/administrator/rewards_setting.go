@@ -18,6 +18,7 @@ const (
 	minWithdrawalAmount = "min_withdrawal_amount"
 	voiceAmount         = "voice_amount"
 	voicePDAmount       = "voice_pd_amount"
+	referralAmount      = "referral_amount"
 	currencyType        = "currency_type"
 )
 
@@ -48,13 +49,13 @@ func (a *Admin) sendMakeMoneyMenu(botLang string, userID int64) (*tgbotapi.Inlin
 	text := a.bot.AdminText(lang, "make_money_setting_text")
 
 	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlAdminButton("change_bonus_amount_button", "admin/make_money?bonus_amount")),
-		msgs.NewIlRow(msgs.NewIlAdminButton("change_min_withdrawal_amount_button", "admin/make_money?min_withdrawal_amount")),
-		msgs.NewIlRow(msgs.NewIlAdminButton("change_voice_amount_button", "admin/make_money?voice_amount")),
-		msgs.NewIlRow(msgs.NewIlAdminButton("change_voice_pd_amount_button", "admin/make_money?voice_pd_amount")),
-		msgs.NewIlRow(msgs.NewIlAdminButton("change_referral_amount_button", "admin/make_money?referral_amount")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_bonus_amount_button", "admin/make_money?"+bonusAmount)),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_min_withdrawal_amount_button", "admin/make_money?"+minWithdrawalAmount)),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_voice_amount_button", "admin/make_money?"+voiceAmount)),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_voice_pd_amount_button", "admin/make_money?"+voicePDAmount)),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_referral_amount_button", "admin/make_money?"+referralAmount)),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_change_top_amount_button", "admin/change_top_amount_settings")),
-		msgs.NewIlRow(msgs.NewIlAdminButton("change_currency_type_button", "admin/make_money?currency_type")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_currency_type_button", "admin/make_money?"+currencyType)),
 		msgs.NewIlRow(msgs.NewIlAdminButton("add_task", "admin/add_task")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("get_all_tasks", "admin/get_all_tasks")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("delete_task", "admin/delete_task_with_id")),
@@ -87,13 +88,29 @@ func (a *Admin) ChangeParameterCommand(s *model.Situation) error {
 	case voicePDAmount:
 		parameter = a.bot.AdminText(lang, "change_voice_pd_amount_button")
 		value = model.AdminSettings.GetParams(s.BotLang).MaxOfVoicePerDay
+	case referralAmount:
+		db.RdbSetUser(s.BotLang, s.User.ID, "admin")
+
+		reward, err := RdbGetRewardGap(s.BotLang, s.User.ID)
+		if err != nil {
+			return err
+		}
+		if reward == nil {
+			reward = model.AdminSettings.GetParams(s.BotLang).ReferralReward.GetGapByIndex(1, 1)
+			err = RdbSetRewardGap(s.BotLang, s.User.ID, reward)
+			if err != nil {
+				return err
+			}
+		}
+
+		markUp, text := a.rewardsMarkUpAndText(s.User.ID, reward)
+		return a.sendMsgAdnAnswerCallback(s, markUp, text)
 	case currencyType:
 		parameter = a.bot.AdminText(lang, "change_currency_type_button")
 		value = model.AdminSettings.GetCurrency(s.BotLang)
 	}
 
 	text = a.adminFormatText(lang, "set_new_amount_text", parameter, value)
-	//_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "type_the_text")
 	markUp := msgs.NewMarkUp(
 		msgs.NewRow(msgs.NewAdminButton("back_to_make_money_setting")),
 		msgs.NewRow(msgs.NewAdminButton("exit")),

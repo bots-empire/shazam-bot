@@ -367,6 +367,22 @@ func nilSettings(settings *Admin, lang string) {
 		}
 	}
 
+	if settings.GlobalParameters[lang].Parameters.ReferralReward == nil {
+		emptyRewardsParams := RewardsMatrix{
+			RewardsLvl{
+				&RewardsGap{
+					LeftBorder:  1,
+					RightBorder: 1,
+					Amount:      1,
+					Level:       1,
+					Index:       1,
+				},
+			},
+		}
+
+		settings.GlobalParameters[lang].Parameters.ReferralReward = emptyRewardsParams
+	}
+
 	if settings.GlobalParameters[lang].Parameters == nil {
 		settings.GlobalParameters[lang].Parameters = &Params{
 			TopReward: []int{10, 10, 10},

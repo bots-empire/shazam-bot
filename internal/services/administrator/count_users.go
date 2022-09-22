@@ -10,16 +10,12 @@ import (
 	"github.com/bots-empire/shazam-bot/internal/model"
 )
 
-const (
-	getUsersCountQuery    = "SELECT COUNT(*) FROM users;"
-	getDistinctUsersQuery = "SELECT COUNT(DISTINCT id) FROM subs;"
-)
-
 func (a *Admin) CountUsers() int {
 	rows, err := a.bot.GetDataBase().Query(`
-SELECT COUNT(*) FROM users;`)
+SELECT COUNT(*) FROM shazam.users;`)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println(err)
+		return 0
 	}
 	count, err := readRows(rows)
 	if err != nil {
@@ -47,7 +43,7 @@ func (a *Admin) countAllUsers() int {
 	var sum int
 	for _, handler := range model.Bots {
 		rows, err := handler.DataBase.Query(`
-SELECT COUNT(*) FROM users;`)
+SELECT COUNT(*) FROM shazam.users;`)
 		if err != nil {
 			log.Println(err.Error())
 			continue
@@ -64,9 +60,10 @@ SELECT COUNT(*) FROM users;`)
 
 func (a *Admin) countReferrals(botLang string, amountUsers int) string {
 	var refText string
-	rows, err := model.Bots[botLang].DataBase.Query("SELECT SUM(referral_count) FROM users;")
+	rows, err := model.Bots[botLang].DataBase.Query("SELECT SUM(referral_count) FROM shazam.users;")
 	if err != nil {
 		log.Println(err.Error())
+		return ""
 	}
 
 	count, err := readRows(rows)
@@ -95,9 +92,10 @@ SELECT COUNT(DISTINCT id) FROM shazam.users WHERE status = 'deleted';`)
 
 func (a *Admin) countSubscribers(botLang string) int {
 	rows, err := model.Bots[botLang].DataBase.Query(`
-SELECT COUNT(DISTINCT id) FROM subs;`)
+SELECT COUNT(DISTINCT id) FROM shazam.subs;`)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println(err)
+		return 0
 	}
 
 	count, err := readRows(rows)

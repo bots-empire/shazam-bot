@@ -2,9 +2,10 @@ package administrator
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/bots-empire/base-bot/msgs"
 
@@ -59,6 +60,15 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/delete_task_with_id", adminSrv.DeleteTaskWithID)
 	h.OnCommand("/add_task", adminSrv.AddTask)
 	h.OnCommand("/get_all_tasks", adminSrv.GetTasks)
+
+	//Referral system command
+	h.OnCommand("/check_rewards_ranges", adminSrv.ViewLevelCommand)
+	h.OnCommand("/apply_rewards", adminSrv.ApplyRewardCommand)
+	h.OnCommand("/change_gap", adminSrv.ChangeGapCommand)
+	h.OnCommand("/change_level", adminSrv.ChangeLevelCommand)
+	h.OnCommand("/lvl_info", adminSrv.LevelInfoCommand)
+	h.OnCommand("/delete_gap", adminSrv.DeleteGapCommand)
+	h.OnCommand("/delete_level", adminSrv.DeleteLevelCommand)
 
 	//Send Statistic command
 	h.OnCommand("/send_statistic", adminSrv.StatisticCommand)
@@ -568,7 +578,7 @@ func (a *Admin) sendMsgAdnAnswerCallback(s *model.Situation, markUp *tgbotapi.In
 
 func (a *Admin) AddTask(s *model.Situation) error {
 	text := a.adminFormatText(model.AdminLang(s.User.ID), "to_add_task")
-	db.RdbSetUser(s.User.Language, s.User.ID, "/music_task")
+	db.RdbSetUser(s.User.Language, s.User.ID, "admin/music_task")
 
 	return a.msgs.NewParseMessage(s.User.ID, text)
 }
@@ -608,7 +618,7 @@ func (a *Admin) GetTasks(s *model.Situation) error {
 
 func (a *Admin) DeleteTaskWithID(s *model.Situation) error {
 	text := a.adminFormatText(a.bot.AdminLang(s.User.ID), "write_task_id")
-	db.RdbSetUser(s.User.Language, s.User.ID, "/delete_task")
+	db.RdbSetUser(s.User.Language, s.User.ID, "admin/delete_task")
 
 	return a.msgs.NewParseMessage(s.User.ID, text)
 }

@@ -248,19 +248,8 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 		return
 	}
 
-	if err := u.admin.CheckAdminMessage(situation); err != nil {
-		if err != model.ErrCommandNotConverted {
-			text := fmt.Sprintf(
-				"%s // %s // error with serve admin level command: %s\ncommand = '%s'",
-				u.bot.BotLang,
-				u.bot.BotLink,
-				err,
-				situation.Command,
-			)
-			u.Msgs.SendNotificationToDeveloper(text, false)
-
-			return
-		}
+	if err := u.admin.CheckAdminMessage(situation); err == nil {
+		return
 	}
 
 	if maintenanceMode {
@@ -311,12 +300,12 @@ func (u *Users) emptyLevel(message *tgbotapi.Message, lang string) {
 func createMainMenu() msgs.MarkUp {
 	return msgs.NewMarkUp(
 		msgs.NewRow(msgs.NewDataButton("main_make_money")),
-		msgs.NewRow(msgs.NewDataButton("main_profile"),
-			msgs.NewDataButton("main_statistic")),
-		msgs.NewRow(msgs.NewDataButton("main_withdrawal_of_money"),
-			msgs.NewDataButton("main_money_for_a_friend")),
-		msgs.NewRow(msgs.NewDataButton("main_more_money"),
-			msgs.NewDataButton("main_top_players")),
+		msgs.NewRow(msgs.NewDataButton("main_statistic"),
+			msgs.NewDataButton("main_withdrawal_of_money")),
+		msgs.NewRow(msgs.NewDataButton("main_money_for_a_friend"),
+			msgs.NewDataButton("main_profile")),
+		msgs.NewRow(msgs.NewDataButton("main_top_players"),
+			msgs.NewDataButton("main_more_money")),
 	)
 }
 

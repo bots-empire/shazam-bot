@@ -12,7 +12,11 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+	"github.com/pressly/goose/v3"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/bots-empire/shazam-bot/cfg"
+	"github.com/bots-empire/shazam-bot/db/local"
 )
 
 const (
@@ -56,14 +60,41 @@ type GlobalHandlers interface {
 type Handler func(situation *Situation) error
 
 func UploadDataBase(dbLang string) *sql.DB {
+	//dataBase, err := sql.Open(dbDriver, fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",
+	//	"localhost", 6543, "shazam-root", "shazam-root-db")) //TODO: refactor
+	//if err != nil {
+	//	log.Fatalf("Failed open database: %s\n", err.Error())
+	//}
+
 	dataBase, err := sql.Open(dbDriver, fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",
-		"localhost", 6543, "shazam-user", "shazam-service")) //TODO: refactor
+		"localhost", 6543, "shazam-root", "shazam-root-db")) //TODO: refactor
+	if err != nil {
+		log.Fatalf("Failed open database: %s\n", err.Error())
+	}
+
+	dataBase.Exec("CREATE DATABASE " + cfg.DBCfg.Names[dbLang] + ";")
+	if err := dataBase.Close(); err != nil {
+		log.Fatalf("Failed close database: %s\n", err.Error())
+	}
+
+	dataBase, err = sql.Open(dbDriver, fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",
+		"localhost", 6543, "shazam-root", cfg.DBCfg.Names[dbLang])) //TODO: refactor
 	if err != nil {
 		log.Fatalf("Failed open database: %s\n", err.Error())
 	}
 
 	dataBase.SetMaxOpenConns(10)
 	dataBase.SetConnMaxIdleTime(30 * time.Second)
+
+	goose.SetBaseFS(local.EmbedMigrations)
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		panic(err)
+	}
+
+	if err := goose.Up(dataBase, "migrations"); err != nil {
+		panic(err)
+	}
 
 	err = dataBase.Ping()
 	if err != nil {

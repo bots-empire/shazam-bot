@@ -32,6 +32,9 @@ func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
 
 	//shazam
 	h.OnCommand("/music_task", adminSrv.MusicTask)
+
+	//Make Money Setting command
+	h.OnCommand("/change_rewards_gap", adminSrv.UpdateRewardsGapCommand)
 	h.OnCommand("/delete_task", adminSrv.DeleteTask)
 }
 
@@ -160,7 +163,6 @@ func (a *Admin) UpdateParameterCommand(s *model.Situation) error {
 		return nil
 	}
 	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
-	s.Command = "admin/make_money_setting"
 
 	return a.MakeMoneySettingCommand(s)
 }
@@ -230,7 +232,6 @@ func (a *Admin) SetNewTextUrlCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin")
 	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 
-	s.Command = "admin/advertisement"
 	s.Params.Level = "admin/change_url"
 	return a.AdvertisementMenuCommand(s)
 }
@@ -272,7 +273,7 @@ func (a *Admin) MusicTask(s *model.Situation) error {
 		return errors.Wrap(err, "failed to parse operation complete music tasks")
 	}
 
-	s.Command = "admin/make_money_setting"
+	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 	return a.MakeMoneySettingCommand(s)
 }
 
@@ -288,6 +289,6 @@ func (a *Admin) DeleteTask(s *model.Situation) error {
 		return errors.Wrap(err, "failed to parse operation complete delete tasks")
 	}
 
-	s.Command = "admin/make_money_setting"
+	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 	return a.MakeMoneySettingCommand(s)
 }
