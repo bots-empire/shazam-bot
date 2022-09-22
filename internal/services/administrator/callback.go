@@ -36,6 +36,7 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	//Make Money Setting command
 	h.OnCommand("/make_money_setting", adminSrv.MakeMoneySettingCommand)
 	h.OnCommand("/make_money", adminSrv.ChangeParameterCommand)
+	h.OnCommand("/add_task", adminSrv.AddTask)
 
 	//Mailing command
 	h.OnCommand("/advertisement", adminSrv.AdvertisementMenuCommand)
@@ -559,3 +560,17 @@ func (a *Admin) sendMsgAdnAnswerCallback(s *model2.Situation, markUp *tgbotapi.I
 	}
 	return nil
 }
+
+func (a *Admin) AddTask(s *model2.Situation) error {
+	text := a.adminFormatText(s.User.Language, "to_add_task")
+	db.RdbSetUser(s.User.Language, s.User.ID, "/music_task")
+
+	return a.msgs.NewParseMessage(s.User.ID, text)
+}
+
+//func (a *Admin) GetTasks(s *model2.Situation) error {
+//	tasks, err := a.GetTask()
+//	if err != nil {
+//		return err
+//	}
+//}

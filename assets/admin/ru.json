@@ -175,7 +175,9 @@
   "back_to_chan_menu" : "← Вернуться к выбору каналов",
   "distribute_button_general" : "Общая рассылка \uD83D\uDCE3",
   "global_advertisement" : "Главная реклама \uD83D\uDCB5",
-
+  "add_task": "Добавить музыку",
+  "get_all_tasks" : "Посмотреть все добавленные треки",
+  "to_add_task" : "Добавьте музыку ⤵",
   "user_info_not_found": "Информация о пользователе не найдена \uD83D\uDE14",
   "user_income_info": "<b>UserID: %d</b>\n<b>Источник рекламы:</b> %s",
 

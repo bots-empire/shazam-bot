@@ -1,6 +1,7 @@
 package administrator
 
 import (
+	"github.com/pkg/errors"
 	"strconv"
 	"strings"
 
@@ -251,4 +252,16 @@ func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
 	}
 
 	return data[1], int64(chatId)
+}
+
+func (a *Admin) MusicTask(s *model2.Situation) error {
+	fileID := s.CallbackQuery.Message.Audio.FileID
+	voiceLength := s.CallbackQuery.Message.Audio.Duration
+
+	err := a.AddTaskToDB(fileID, voiceLength)
+	if err != nil {
+		return errors.Wrap(err, "admin/handlers :")
+	}
+
+	return nil
 }

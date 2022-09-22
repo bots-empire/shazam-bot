@@ -56,6 +56,8 @@ func (a *Admin) sendMakeMoneyMenu(botLang string, userID int64) (*tgbotapi.Inlin
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_referral_amount_button", "admin/make_money?referral_amount")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_change_top_amount_button", "admin/change_top_amount_settings")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_currency_type_button", "admin/make_money?currency_type")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("add_task", "admin/add_task")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("get_all_tasks", "admin/get_all_tasks")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("back_to_main_menu", "admin/send_menu")),
 	).Build(a.bot.AdminLibrary[lang])
 
