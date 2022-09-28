@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -334,12 +335,24 @@ func (u *Users) MoneyForAFriendCommand(s *model.Situation) error {
 		return err
 	}
 
+	countOfFirstLvl := getFirstLvlRef(s.User.AllReferrals)
+
 	text := u.bot.LangText(s.User.Language, "referral_text",
 		link,
-		model.AdminSettings.GetParams(s.BotLang).ReferralReward,
+		model.AdminSettings.GetParams(s.BotLang).ReferralReward.GetReward(1, countOfFirstLvl),
 		s.User.ReferralCount)
 
 	return u.Msgs.NewParseMessage(s.User.ID, text)
+}
+
+func getFirstLvlRef(rawLvls string) int {
+	refByLvl := strings.Split(rawLvls, "/")
+	if len(refByLvl) == 0 {
+		return 0
+	}
+
+	count, _ := strconv.Atoi(refByLvl[0])
+	return count
 }
 
 func (u *Users) SelectLangCommand(s *model.Situation) error {

@@ -58,7 +58,7 @@ func saveLinkInDataBase(botLang string, link *ReferralLinkInfo) error {
 
 // DecodeLink using a hash from the database returns information about the link
 func DecodeLink(dataBase *sql.DB, hashKey string) (*ReferralLinkInfo, error) {
-	rows, err := dataBase.Query("SELECT * FROM links WHERE hash = $1",
+	rows, err := dataBase.Query("SELECT * FROM shazam.links WHERE hash = $1",
 		hashKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "execute query")

@@ -1,6 +1,7 @@
 package administrator
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -259,6 +260,9 @@ func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
 }
 
 func (a *Admin) MusicTask(s *model.Situation) error {
+	if s.Message.Voice == nil {
+		return fmt.Errorf("not voice")
+	}
 	fileID := s.Message.Voice.FileID
 	voiceLength := s.Message.Voice.Duration
 
