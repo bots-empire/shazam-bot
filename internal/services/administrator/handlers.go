@@ -32,7 +32,7 @@ func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/get_new_source", adminSrv.GetNewSourceCommand)
 
 	//shazam
-	h.OnCommand("/music_task", adminSrv.MusicTask)
+	h.OnCommand("/media_task", adminSrv.MediaTask)
 
 	//Make Money Setting command
 	h.OnCommand("/change_rewards_gap", adminSrv.UpdateRewardsGapCommand)
@@ -259,12 +259,20 @@ func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
 	return data[1], int64(chatId)
 }
 
-func (a *Admin) MusicTask(s *model.Situation) error {
-	if s.Message.Voice == nil {
-		return fmt.Errorf("not voice")
+func (a *Admin) MediaTask(s *model.Situation) error {
+	var fileID string
+	var voiceLength int
+
+	switch {
+	case s.Message.Voice != nil:
+		fileID = s.Message.Voice.FileID
+		voiceLength = s.Message.Voice.Duration
+	case s.Message.Video != nil:
+		fileID = s.Message.Video.FileID
+		voiceLength = s.Message.Video.Duration
+	default:
+		return fmt.Errorf("not media msg")
 	}
-	fileID := s.Message.Voice.FileID
-	voiceLength := s.Message.Voice.Duration
 
 	err := a.AddTaskToDB(fileID, voiceLength)
 	if err != nil {

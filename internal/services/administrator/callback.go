@@ -578,7 +578,7 @@ func (a *Admin) sendMsgAdnAnswerCallback(s *model.Situation, markUp *tgbotapi.In
 
 func (a *Admin) AddTask(s *model.Situation) error {
 	text := a.adminFormatText(model.AdminLang(s.User.ID), "to_add_task")
-	db.RdbSetUser(s.User.Language, s.User.ID, "admin/music_task")
+	db.RdbSetUser(s.User.Language, s.User.ID, "admin/media_task")
 
 	return a.msgs.NewParseMessage(s.User.ID, text)
 }
@@ -595,16 +595,16 @@ func (a *Admin) GetTasks(s *model.Situation) error {
 		return errors.Wrap(err, "all tasks: failed to parse message")
 	}
 
-	for i := range tasks {
+	for _, task := range tasks {
 		msg := tgbotapi.VoiceConfig{
 			BaseFile: tgbotapi.BaseFile{
 				BaseChat: tgbotapi.BaseChat{
 					ChatID: s.User.ID,
 				},
-				File: tgbotapi.FileID(tasks[i].FileID),
+				File: tgbotapi.FileID(task.FileID),
 			},
 			ParseMode: "HTML",
-			Caption:   a.adminFormatText(model.AdminLang(s.User.ID), "file_id", tasks[i].ID),
+			Caption:   a.adminFormatText(model.AdminLang(s.User.ID), "file_id", task.ID),
 		}
 
 		err := a.msgs.SendMsgToUser(msg, s.User.ID)

@@ -15,7 +15,7 @@ type ShazamTask struct {
 
 func GetAllTasks(db *sql.DB) ([]*ShazamTask, error) {
 	rows, err := db.Query(`
-SELECT * FROm shazam.tasks;`)
+SELECT id, file_id, voice_length FROM shazam.tasks;`)
 	if err != nil {
 		return nil, errors.Wrap(err, "get tasks from query")
 	}
