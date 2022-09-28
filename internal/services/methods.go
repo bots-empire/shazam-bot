@@ -2,6 +2,8 @@ package services
 
 import (
 	"database/sql"
+	"github.com/jackc/pgconn"
+	"strings"
 
 	"github.com/bots-empire/shazam-bot/internal/model"
 )
@@ -10,6 +12,9 @@ func (u *Users) CreateNilTop(number int) error {
 	dataBase := u.bot.GetDataBase()
 	_, err := dataBase.Exec(`INSERT INTO shazam.top VALUES ($1,$2,$3,$4)`, number, 0, 0, 0)
 	if err != nil {
+		if strings.Contains(err.(*pgconn.PgError).Message, "duplicate key value violates unique constraint") {
+			return nil
+		}
 		return err
 	}
 

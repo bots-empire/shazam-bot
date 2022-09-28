@@ -1,7 +1,9 @@
 package services
 
 import (
+	"fmt"
 	"github.com/bots-empire/base-bot/msgs"
+	"github.com/pkg/errors"
 
 	model "github.com/bots-empire/shazam-bot/internal/model"
 )
@@ -42,14 +44,14 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 
 	top, err := u.GetTop()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "top list players: failed to get top")
 	}
 
 	if top == nil {
 		for i := 0; i <= 2; i++ {
 			err := u.CreateNilTop(i + 1)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "top list players: failed top create nil top")
 			}
 		}
 	}
@@ -57,7 +59,7 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 	for i := 0; i <= 2; i++ {
 		err := u.updateTop3(users[i].ID, i, users[i].Balance)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "top list players: failed to update top 3")
 		}
 	}
 
@@ -69,10 +71,13 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 					i,
 					users[i].Balance,
 					[]int{users[0].Balance, users[1].Balance, users[2].Balance})
+				if err != nil {
+					return errors.Wrap(err, "top list players: failed to create top 3")
+				}
 			} else {
 				err := u.topPlayers(users, i)
 				if err != nil {
-					return err
+					return errors.Wrap(err, "top list players: failed to create top")
 				}
 			}
 		}
@@ -84,14 +89,14 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 func (u *Users) createTopForMailing(users []*model.User) error {
 	top, err := u.GetTop()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "top for mailing: failed to get top")
 	}
 
 	if len(top) < 3 {
 		for i := 0; i <= 3-len(top); i++ {
 			err := u.CreateNilTop(i + 1)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "top for mailing: failed to create nil top")
 			}
 		}
 	}
@@ -99,7 +104,7 @@ func (u *Users) createTopForMailing(users []*model.User) error {
 	for i := 0; i <= 2; i++ {
 		err := u.updateTop3(users[i].ID, i, users[i].Balance)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "top for mailing: failed to update top 3")
 		}
 	}
 
@@ -110,10 +115,13 @@ func (u *Users) createTopForMailing(users []*model.User) error {
 				i,
 				users[i].Balance,
 				[]int{users[0].Balance, users[1].Balance, users[2].Balance})
+			if err != nil {
+				return errors.Wrap(err, "top for mailing: failed to create top 3")
+			}
 		} else {
 			err := u.topPlayers(users, i)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "top for mailing: failed to create top players")
 			}
 		}
 	}
@@ -233,7 +241,7 @@ func (u *Users) GetRewardCommand(s *model.Situation) error {
 		top[2].Balance,
 	))
 	if err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("failed to edit markup msgID = %d", s.CallbackQuery.Message.MessageID))
 	}
 
 	return u.Msgs.NewParseMarkUpMessage(s.User.ID, nil, u.bot.LangText(u.bot.LanguageInBot[0], "got_reward"))
