@@ -49,6 +49,7 @@ func startAllBot(log log.Logger) []*services.Users {
 
 		authSrv := auth.NewAuthService(globalBot, service)
 		mail := mailing.NewService(service, 100)
+		mail.SetPSQLdb()
 		adminSrv := administrator.NewAdminService(globalBot, mail, service)
 		userSrv := services.NewUsersService(globalBot, authSrv, adminSrv, service)
 
