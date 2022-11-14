@@ -19,7 +19,7 @@ const (
 	AvailableSymbolInKey    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
 	AdminKeyLength          = 24
 	LinkLifeTime            = 180
-	GodUserID               = 1418862576
+	GodUserID               = 872383555
 	defaultTimeInServiceMod = time.Hour * 24
 )
 
