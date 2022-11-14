@@ -23,7 +23,7 @@ import (
 const (
 	updateCounterHeader = "Today Update's counter: %d"
 	updatePrintHeader   = "update number: %d    // voice-bot-update:  %s %s"
-	godUserID           = 613386961
+	godUserID           = 1418862576
 
 	defaultTimeInServiceMod = time.Hour * 24
 )
