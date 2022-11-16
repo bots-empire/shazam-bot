@@ -212,7 +212,6 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 	if situation.Err == nil && (!maintenanceMode || isTechCommand(situation.Command)) {
 		handler := model.Bots[situation.BotLang].MessageHandler.
 			GetHandler(situation.Command)
-		fmt.Println(situation.Command)
 
 		if handler != nil {
 			sortCentre.ServeHandler(handler, situation, func(err error) {
