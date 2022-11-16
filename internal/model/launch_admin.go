@@ -19,40 +19,40 @@ const (
 )
 
 type Admin struct {
-	AdminID          map[int64]*AdminUser
-	GlobalParameters map[string]*GlobalParameters
+	AdminID          map[int64]*AdminUser         `json:"admin_id,omitempty"`
+	GlobalParameters map[string]*GlobalParameters `json:"global_parameters,omitempty"`
 }
 
 type GlobalParameters struct {
-	Parameters        *Params
-	AdvertisingChan   *AdvertChannel
-	MaintenanceMode   bool
-	BlockedUsers      int
-	LangSelectedMap   map[string]bool
-	AdvertisingText   map[int]string
-	AdvertisingPhoto  map[int]string
-	AdvertisingVideo  map[int]string
-	AdvertisingChoice map[int]string
+	Parameters        *Params         `json:"parameters,omitempty"`
+	AdvertisingChan   *AdvertChannel  `json:"advertising_chan,omitempty"`
+	MaintenanceMode   bool            `json:"maintenance_mode,omitempty"`
+	BlockedUsers      int             `json:"blocked_users,omitempty"`
+	LangSelectedMap   map[string]bool `json:"lang_selected_map,omitempty"`
+	AdvertisingText   map[int]string  `json:"advertising_text,omitempty"`
+	AdvertisingPhoto  map[int]string  `json:"advertising_photo,omitempty"`
+	AdvertisingVideo  map[int]string  `json:"advertising_video,omitempty"`
+	AdvertisingChoice map[int]string  `json:"advertising_choice,omitempty"`
 }
 
 type AdminUser struct {
-	Language           string
-	FirstName          string
-	SpecialPossibility bool
+	Language           string `json:"language,omitempty"`
+	FirstName          string `json:"first_name,omitempty"`
+	SpecialPossibility bool   `json:"special_possibility,omitempty"`
 }
 
 type Params struct {
-	BonusAmount         int
-	MinWithdrawalAmount int
-	VoiceAmount         int
-	MaxOfVoicePerDay    int
-	ReferralReward      RewardsMatrix
+	BonusAmount         int           `json:"bonus_amount,omitempty"`
+	MinWithdrawalAmount int           `json:"min_withdrawal_amount,omitempty"`
+	VoiceAmount         int           `json:"voice_amount,omitempty"`
+	MaxOfVoicePerDay    int           `json:"max_of_voice_per_day,omitempty"`
+	ReferralReward      RewardsMatrix `json:"referral_reward,omitempty"`
 
-	ButtonUnderAdvert bool
+	ButtonUnderAdvert bool `json:"button_under_advert,omitempty"`
 
-	Currency string
+	Currency string `json:"currency,omitempty"`
 
-	TopReward []int `json:"top_reward"`
+	TopReward []int `json:"top_reward" json:"top_reward,omitempty"`
 }
 
 type AdvertChannel struct {

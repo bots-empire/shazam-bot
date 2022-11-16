@@ -15,7 +15,7 @@ import (
 func (a *Admin) StartMailingCommand(s *model.Situation) error {
 	channel, _ := strconv.Atoi(strings.Split(s.CallbackQuery.Data, "?")[1])
 
-	err := a.mailing.StartMailing(channelsFromNum(channel))
+	err := a.mailing.StartMailing(channelsFromNum(channel), s.User.ID)
 	if err != nil {
 		return err
 	}

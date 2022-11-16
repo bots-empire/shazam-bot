@@ -5,6 +5,8 @@
   "/admin": "/admin",
   "/mmon": "/mmon",
   "/mmoff": "/mmoff",
+  "/debugon": "/debugon",
+  "/debugoff": "/debugoff",
   "/select_language" : "/select_language",
 
   "main_withdrawal_of_money": "/main_withdrawal_of_money",

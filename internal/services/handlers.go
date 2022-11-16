@@ -65,6 +65,8 @@ func (h *MessagesHandlers) Init(userSrv *Users, adminSrv *administrator.Admin) {
 	//Tech command
 	h.OnCommand("/mmon", userSrv.MaintenanceModeOnCommand)
 	h.OnCommand("/mmoff", userSrv.MaintenanceModeOffCommand)
+	h.OnCommand("/debugon", userSrv.DebugOnCommand)
+	h.OnCommand("/debugoff", userSrv.DebugOffCommand)
 }
 
 func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
@@ -561,4 +563,12 @@ func (u *Users) simpleAdminMsg(s *model.Situation, key string) error {
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
+}
+
+func (u *Users) DebugOnCommand(s *model.Situation) error {
+	return u.admin.DebugOnCommand(s)
+}
+
+func (u *Users) DebugOffCommand(s *model.Situation) error {
+	return u.admin.DebugOffCommand(s)
 }

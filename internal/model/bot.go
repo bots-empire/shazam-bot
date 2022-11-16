@@ -137,6 +137,10 @@ func GetGlobalBot(botLang string) *GlobalBot {
 	return Bots[botLang]
 }
 
+func (b *GlobalBot) GetRelationName() string {
+	return "shazam.users"
+}
+
 func (b *GlobalBot) GetBotLang() string {
 	return b.BotLang
 }

@@ -1,6 +1,7 @@
 package administrator
 
 import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -15,10 +16,11 @@ import (
 )
 
 const (
-	AvailableSymbolInKey = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
-	AdminKeyLength       = 24
-	LinkLifeTime         = 180
-	GodUserID            = 872383555
+	AvailableSymbolInKey    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
+	AdminKeyLength          = 24
+	LinkLifeTime            = 180
+	GodUserID               = 1418862576
+	defaultTimeInServiceMod = time.Hour * 24
 )
 
 var availableKeys = make(map[string]string)
@@ -168,4 +170,22 @@ func (a *Admin) GetNewSourceCommand(s *model.Situation) error { // TODO: fix bac
 
 	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 	return a.AdminMenuCommand(s)
+}
+
+func (a *Admin) DebugOnCommand(s *model.Situation) error {
+	a.mailing.DebugModeOn()
+
+	msg := tgbotapi.NewMessage(s.User.ID, "Debug mode включен")
+	go func() {
+		time.Sleep(defaultTimeInServiceMod)
+		_ = a.DebugOffCommand(s)
+	}()
+	return a.msgs.SendMsgToUser(msg, s.User.ID)
+}
+
+func (a *Admin) DebugOffCommand(s *model.Situation) error {
+	a.mailing.DebugModeOff()
+
+	msg := tgbotapi.NewMessage(s.User.ID, "Debug mode выключен")
+	return a.msgs.SendMsgToUser(msg, s.User.ID)
 }
