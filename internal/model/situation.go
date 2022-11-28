@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -12,6 +14,7 @@ type Situation struct {
 	Command       string
 	Params        *Parameters
 	Err           error
+	StartTime     time.Time
 }
 
 type Parameters struct {

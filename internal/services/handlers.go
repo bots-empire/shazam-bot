@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/roylee0704/gron"
 	"github.com/roylee0704/gron/xtime"
 
@@ -43,21 +44,9 @@ func (h *MessagesHandlers) Init(userSrv *Users, adminSrv *administrator.Admin) {
 	h.OnCommand("/admin", adminSrv.AdminLoginCommand)
 
 	//Main command
-	h.OnCommand("/main_profile", userSrv.SendProfileCommand)
-	h.OnCommand("/main_money_for_a_friend", userSrv.MoneyForAFriendCommand)
-	h.OnCommand("/main_more_money", userSrv.MoreMoneyCommand)
-	h.OnCommand("/main_make_money", userSrv.MakeMoneyCommand)
 	h.OnCommand("/new_make_money", userSrv.MakeMoneyMsgCommand)
-	h.OnCommand("/main_statistic", userSrv.MakeStatisticCommand)
-
-	//Spend money command
-	h.OnCommand("/main_withdrawal_of_money", userSrv.SpendMoneyWithdrawalCommand)
-	h.OnCommand("/paypal_method", userSrv.PaypalReqCommand)
-	h.OnCommand("/credit_card_method", userSrv.CreditCardReqCommand)
-	h.OnCommand("/withdrawal_method", userSrv.WithdrawalMethodCommand)
 	h.OnCommand("/withdrawal_req_amount", userSrv.ReqWithdrawalAmountCommand)
 	h.OnCommand("/withdrawal_exit", userSrv.WithdrawalAmountCommand)
-	h.OnCommand("/main_top_players", userSrv.TopListPlayerCommand)
 
 	//Log out command
 	h.OnCommand("/admin_log_out", userSrv.AdminLogOutCommand)
@@ -95,6 +84,7 @@ func (u *Users) checkUpdate(update *tgbotapi.Update, logger log.Logger, sortCent
 		return
 	}
 
+	st := time.Now()
 	u.printNewUpdate(update, logger)
 	if update.Message != nil {
 		var command string
@@ -107,7 +97,7 @@ func (u *Users) checkUpdate(update *tgbotapi.Update, logger log.Logger, sortCent
 			return
 		}
 
-		situation := createSituationFromMsg(u.bot.BotLang, update.Message, user)
+		situation := createSituationFromMsg(u.bot.BotLang, update.Message, user, st)
 		situation.Command = command
 
 		u.checkMessage(&situation, logger, sortCentre)
@@ -122,7 +112,7 @@ func (u *Users) checkUpdate(update *tgbotapi.Update, logger log.Logger, sortCent
 				logger.Warn("err with set start language: %s", err.Error())
 			}
 		}
-		situation, err := u.createSituationFromCallback(u.bot.BotLang, update.CallbackQuery)
+		situation, err := u.createSituationFromCallback(u.bot.BotLang, update.CallbackQuery, st)
 		if err != nil {
 			u.smthWentWrong(update.CallbackQuery.Message.Chat.ID, u.bot.BotLang)
 			logger.Warn("err with create situation from callback: %s", err.Error())
@@ -137,10 +127,6 @@ func (u *Users) checkUpdate(update *tgbotapi.Update, logger log.Logger, sortCent
 func (u *Users) printNewUpdate(update *tgbotapi.Update, logger log.Logger) {
 	model.UpdateStatistic.Mu.Lock()
 	defer model.UpdateStatistic.Mu.Unlock()
-
-	if (time.Now().Unix())/86400 > int64(model.UpdateStatistic.Day) {
-		u.sendTodayUpdateMsg()
-	}
 
 	model.UpdateStatistic.Counter++
 	model.SaveUpdateStatistic()
@@ -173,7 +159,7 @@ func (u *Users) sendTodayUpdateMsg() {
 	model.UpdateStatistic.Day = int(time.Now().Unix()) / 86400
 }
 
-func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *model.User) model.Situation {
+func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *model.User, st time.Time) model.Situation {
 	return model.Situation{
 		Message: message,
 		BotLang: botLang,
@@ -181,10 +167,11 @@ func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *mod
 		Params: &model.Parameters{
 			Level: db.GetLevel(botLang, message.From.ID),
 		},
+		StartTime: st,
 	}
 }
 
-func (u *Users) createSituationFromCallback(botLang string, callbackQuery *tgbotapi.CallbackQuery) (*model.Situation, error) {
+func (u *Users) createSituationFromCallback(botLang string, callbackQuery *tgbotapi.CallbackQuery, st time.Time) (*model.Situation, error) {
 	user, err := u.auth.GetUser(callbackQuery.From.ID)
 	if err != nil {
 		return &model.Situation{}, err
@@ -198,6 +185,7 @@ func (u *Users) createSituationFromCallback(botLang string, callbackQuery *tgbot
 		Params: &model.Parameters{
 			Level: db.GetLevel(botLang, callbackQuery.From.ID),
 		},
+		StartTime: st,
 	}, nil
 }
 
@@ -300,15 +288,15 @@ func (u *Users) emptyLevel(message *tgbotapi.Message, lang string) {
 	_ = u.Msgs.SendMsgToUser(msg, message.Chat.ID)
 }
 
-func createMainMenu() msgs.MarkUp {
-	return msgs.NewMarkUp(
-		msgs.NewRow(msgs.NewDataButton("main_make_money")),
-		msgs.NewRow(msgs.NewDataButton("main_statistic"),
-			msgs.NewDataButton("main_withdrawal_of_money")),
-		msgs.NewRow(msgs.NewDataButton("main_money_for_a_friend"),
-			msgs.NewDataButton("main_profile")),
-		msgs.NewRow(msgs.NewDataButton("main_top_players"),
-			msgs.NewDataButton("main_more_money")),
+func createMainMenu() msgs.InlineMarkUp {
+	return msgs.NewIlMarkUp(
+		msgs.NewIlRow(msgs.NewIlDataButton("main_make_money", "/main_make_money")),
+		msgs.NewIlRow(msgs.NewIlDataButton("main_money_for_a_friend", "/main_money_for_a_friend")),
+		msgs.NewIlRow(msgs.NewIlDataButton("main_top_players", "/main_top_players")),
+		msgs.NewIlRow(msgs.NewIlDataButton("main_withdrawal_of_money", "/main_withdrawal_of_money"),
+			msgs.NewIlDataButton("main_profile", "/main_profile")),
+		msgs.NewIlRow(msgs.NewIlDataButton("main_statistic", "/main_statistic"),
+			msgs.NewIlDataButton("main_more_money", "/main_more_money")),
 	)
 }
 
@@ -316,14 +304,14 @@ func (u *Users) SendProfileCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
 	text := u.bot.LangText(s.User.Language, "profile_text",
-		s.Message.From.FirstName, s.Message.From.UserName, s.User.Balance, s.User.Completed, s.User.ReferralCount)
+		s.CallbackQuery.From.FirstName, s.CallbackQuery.From.UserName, s.User.Balance, s.User.Completed, s.User.ReferralCount)
 
 	if len(model.GetGlobalBot(s.BotLang).LanguageInBot) > 1 {
-		ReplyMarkup := u.createLangMenu(model.GetGlobalBot(s.BotLang).LanguageInBot)
-		return u.Msgs.NewParseMarkUpMessage(s.User.ID, &ReplyMarkup, text)
+		replyMarkup := u.createLangMenu(model.GetGlobalBot(s.BotLang).LanguageInBot, s.User.Language)
+		return u.Msgs.NewParseMarkUpMessage(s.User.ID, &replyMarkup, text)
 	}
 
-	return u.Msgs.NewParseMessage(s.User.ID, text)
+	return u.Msgs.NewEditMarkUpMessage(s.User.ID, s.CallbackQuery.Message.MessageID, u.mainMenuButton(s.User.Language), text)
 }
 
 func (u *Users) MoneyForAFriendCommand(s *model.Situation) error {
@@ -342,9 +330,10 @@ func (u *Users) MoneyForAFriendCommand(s *model.Situation) error {
 	text := u.bot.LangText(s.User.Language, "referral_text",
 		link,
 		model.AdminSettings.GetParams(s.BotLang).ReferralReward.GetReward(1, countOfFirstLvl),
-		s.User.ReferralCount)
+		s.User.ReferralCount,
+	)
 
-	return u.Msgs.NewParseMessage(s.User.ID, text)
+	return u.Msgs.NewEditMarkUpMessage(s.User.ID, s.CallbackQuery.Message.MessageID, u.mainMenuButton(s.User.Language), text)
 }
 
 func getFirstLvlRef(rawLvls string) int {
@@ -365,12 +354,12 @@ func (u *Users) SelectLangCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
 	msg := tgbotapi.NewMessage(s.User.ID, text)
-	msg.ReplyMarkup = u.createLangMenu(model.GetGlobalBot(s.BotLang).LanguageInBot)
+	msg.ReplyMarkup = u.createLangMenu(model.GetGlobalBot(s.BotLang).LanguageInBot, s.User.Language)
 
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
-func (u *Users) createLangMenu(languages []string) tgbotapi.InlineKeyboardMarkup {
+func (u *Users) createLangMenu(languages []string, userLang string) tgbotapi.InlineKeyboardMarkup {
 	var markup tgbotapi.InlineKeyboardMarkup
 
 	for _, lang := range languages {
@@ -378,6 +367,10 @@ func (u *Users) createLangMenu(languages []string) tgbotapi.InlineKeyboardMarkup
 			tgbotapi.NewInlineKeyboardButtonData(u.bot.LangText(lang, "lang_button"), "/language?"+lang),
 		})
 	}
+
+	markup.InlineKeyboard = append(markup.InlineKeyboard, []tgbotapi.InlineKeyboardButton{
+		tgbotapi.NewInlineKeyboardButtonData(u.bot.LangText(userLang, "back_to_main_menu_button"), "/main_menu"),
+	})
 
 	return markup
 }
@@ -388,31 +381,47 @@ func (u *Users) StartCommand(s *model.Situation) error {
 			s.Command = s.Message.Text
 			return u.admin.CheckNewAdmin(s)
 		}
+
+		if strings.Contains(s.Message.Text, "new_support") {
+			s.Command = s.Message.Text
+			return u.admin.CheckNewSupport(s)
+		}
+	}
+
+	err := u.setKeyboardMenuButton(s)
+	if err != nil {
+		return errors.Wrap(err, "failed set under keyboard menu button")
 	}
 
 	text := u.bot.LangText(s.User.Language, "main_select_menu")
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
-	msg := tgbotapi.NewMessage(s.User.ID, text)
-	msg.ReplyMarkup = createMainMenu().Build(u.bot.Language[s.User.Language])
+	markUp := createMainMenu().Build(u.bot.Language[s.User.Language])
 
-	return u.Msgs.SendMsgToUser(msg, s.User.ID)
+	return u.Msgs.NewParseMarkUpMessage(s.User.ID, &markUp, text)
+}
+
+func (u *Users) RestartCommand(s *model.Situation) error {
+	text := u.bot.LangText(s.User.Language, "main_select_menu")
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+
+	markup := createMainMenu().Build(u.bot.Language[s.User.Language])
+
+	return u.Msgs.NewEditMarkUpMessage(s.User.ID, s.CallbackQuery.Message.MessageID, &markup, text)
 }
 
 func (u *Users) SpendMoneyWithdrawalCommand(s *model.Situation) error {
-	db.RdbSetUser(s.BotLang, s.User.ID, "withdrawal")
-
 	text := u.bot.LangText(s.User.Language, "select_payment")
-	markUp := msgs.NewMarkUp(
-		msgs.NewRow(msgs.NewDataButton("withdrawal_method_1"),
-			msgs.NewDataButton("withdrawal_method_2")),
-		msgs.NewRow(msgs.NewDataButton("withdrawal_method_3"),
-			msgs.NewDataButton("withdrawal_method_4")),
-		msgs.NewRow(msgs.NewDataButton("withdrawal_method_5")),
-		msgs.NewRow(msgs.NewDataButton("main_back")),
+	markUp := msgs.NewIlMarkUp(
+		msgs.NewIlRow(msgs.NewIlDataButton("withdrawal_method_1", "/credit_card_method"),
+			msgs.NewIlDataButton("withdrawal_method_2", "/credit_card_method")),
+		msgs.NewIlRow(msgs.NewIlDataButton("withdrawal_method_3", "/credit_card_method"),
+			msgs.NewIlDataButton("withdrawal_method_4", "/credit_card_method")),
+		msgs.NewIlRow(msgs.NewIlDataButton("withdrawal_method_5", "/credit_card_method")),
+		msgs.NewIlRow(msgs.NewIlDataButton("back_to_main_menu_button", "/main_menu")),
 	).Build(u.bot.Language[s.User.Language])
 
-	return u.Msgs.NewParseMarkUpMessage(s.User.ID, &markUp, text)
+	return u.Msgs.NewEditMarkUpMessage(s.User.ID, s.CallbackQuery.Message.MessageID, &markUp, text)
 }
 
 func (u *Users) PaypalReqCommand(s *model.Situation) error {
@@ -478,7 +487,7 @@ func (u *Users) MakeStatisticCommand(s *model.Situation) error {
 
 	text := u.bot.LangText(s.User.Language, "statistic_to_user", users, totalEarned, totalVoice)
 
-	return u.Msgs.NewParseMessage(s.Message.Chat.ID, text)
+	return u.Msgs.NewEditMarkUpMessage(s.User.ID, s.CallbackQuery.Message.MessageID, u.mainMenuButton(s.User.Language), text)
 }
 
 func (u *Users) MakeMoneyCommand(s *model.Situation) error {
@@ -521,14 +530,16 @@ func (u *Users) MoreMoneyCommand(s *model.Situation) error {
 
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 	text := u.bot.LangText(s.User.Language, "more_money_text",
-		model.AdminSettings.GetParams(s.BotLang).BonusAmount, model.AdminSettings.GetParams(s.BotLang).BonusAmount)
+		model.AdminSettings.GetParams(s.BotLang).BonusAmount,
+	)
 
 	markup := msgs.NewIlMarkUp(
 		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model.AdminSettings.GlobalParameters[s.BotLang].AdvertisingChan.Url[model.MainAdvert])),
 		msgs.NewIlRow(msgs.NewIlDataButton("get_bonus_button", "/send_bonus_to_user")),
+		msgs.NewIlRow(msgs.NewIlDataButton("back_to_main_menu_button", "/main_menu")),
 	).Build(u.bot.Language[s.User.Language])
 
-	return u.Msgs.NewParseMarkUpMessage(s.User.ID, &markup, text)
+	return u.Msgs.NewEditMarkUpMessage(s.User.ID, s.CallbackQuery.Message.MessageID, &markup, text)
 }
 
 func (u *Users) MaintenanceModeOnCommand(s *model.Situation) error {
@@ -563,6 +574,24 @@ func (u *Users) simpleAdminMsg(s *model.Situation, key string) error {
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
+}
+
+func (u *Users) setKeyboardMenuButton(s *model.Situation) error {
+	text := u.bot.LangText(s.User.Language, "menu_keyboard_button")
+
+	markup := msgs.NewMarkUp(
+		msgs.NewRow(msgs.NewDataButton("menu_keyboard_button")),
+	).Build(u.bot.Language[s.User.Language])
+
+	return u.Msgs.NewParseMarkUpMessage(s.User.ID, &markup, text)
+}
+
+func (u *Users) mainMenuButton(lang string) *tgbotapi.InlineKeyboardMarkup {
+	markup := msgs.NewIlMarkUp(
+		msgs.NewIlRow(msgs.NewIlDataButton("back_to_main_menu_button", "/main_menu")),
+	).Build(u.bot.Language[lang])
+
+	return &markup
 }
 
 func (u *Users) DebugOnCommand(s *model.Situation) error {

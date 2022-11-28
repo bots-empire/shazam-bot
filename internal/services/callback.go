@@ -24,6 +24,21 @@ func (h *CallBackHandlers) GetHandler(command string) model.Handler {
 }
 
 func (h *CallBackHandlers) Init(userSrv *Users) {
+	//Main command
+	h.OnCommand("/main_profile", userSrv.SendProfileCommand)
+	h.OnCommand("/main_money_for_a_friend", userSrv.MoneyForAFriendCommand)
+	h.OnCommand("/main_more_money", userSrv.MoreMoneyCommand)
+	h.OnCommand("/main_make_money", userSrv.MakeMoneyCommand)
+	h.OnCommand("/main_statistic", userSrv.MakeStatisticCommand)
+	h.OnCommand("/main_withdrawal_of_money", userSrv.SpendMoneyWithdrawalCommand)
+	h.OnCommand("/main_top_players", userSrv.TopListPlayerCommand)
+	h.OnCommand("/main_menu", userSrv.RestartCommand)
+
+	//Spend money command
+	h.OnCommand("/paypal_method", userSrv.PaypalReqCommand)
+	h.OnCommand("/credit_card_method", userSrv.CreditCardReqCommand)
+	h.OnCommand("/withdrawal_method", userSrv.WithdrawalMethodCommand)
+
 	//Money command
 	h.OnCommand("/language", userSrv.LanguageCommand)
 	h.OnCommand("/send_bonus_to_user", userSrv.GetBonusCommand)

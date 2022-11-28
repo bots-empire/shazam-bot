@@ -10,6 +10,7 @@ import (
 	"github.com/bots-empire/base-bot/mailing"
 	"github.com/bots-empire/base-bot/msgs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/roylee0704/gron"
 	"github.com/roylee0704/gron/xtime"
@@ -85,6 +86,10 @@ func startBot(b *model.GlobalBot, log log.Logger, lang string) {
 }
 
 func startPrometheusHandler(logger log.Logger) {
+	prometheus.MustRegister(
+		model.ResponseTime,
+	)
+
 	http.Handle("/metrics", promhttp.Handler())
 	metricsPort := "7021"
 	logger.Ok("Metrics can be read from %s port", metricsPort)

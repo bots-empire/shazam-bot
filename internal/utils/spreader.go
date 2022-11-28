@@ -32,6 +32,20 @@ type condition struct {
 }
 
 func (c condition) serve() error {
+	defer func() {
+		var msgType string
+
+		switch {
+		case c.situation.Message != nil:
+			msgType = "Message"
+		case c.situation.CallbackQuery != nil:
+			msgType = "CallbackQuery"
+		default:
+			msgType = "Undefined"
+		}
+
+		model.ResponseTime.WithLabelValues(c.situation.Command, msgType, c.situation.BotLang).Observe(time.Now().Sub(c.situation.StartTime).Seconds())
+	}()
 	return c.handler(c.situation)
 }
 

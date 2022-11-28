@@ -2,8 +2,9 @@ package services
 
 import (
 	"database/sql"
-	"github.com/jackc/pgconn"
 	"strings"
+
+	"github.com/jackc/pgconn"
 
 	"github.com/bots-empire/shazam-bot/internal/model"
 )
@@ -36,7 +37,7 @@ SELECT balance FROM shazam.users WHERE id = ?`, id).Scan(&balance)
 func (u *Users) GetUsers(limit int) ([]*model.User, error) {
 	dataBase := u.bot.GetDataBase()
 	rows, err := dataBase.Query(`
-SELECT id, balance FROM shazam.users ORDER BY balance DESC LIMIT $1`,
+SELECT id, balance FROM shazam.users ORDER BY balance DESC LIMIT $1;`,
 		limit)
 	if err != nil {
 		return nil, err

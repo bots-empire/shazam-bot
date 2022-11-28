@@ -1,11 +1,17 @@
 package administrator
 
 import (
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"github.com/bots-empire/base-bot/msgs"
 
@@ -18,7 +24,7 @@ import (
 const (
 	AvailableSymbolInKey    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
 	AdminKeyLength          = 24
-	LinkLifeTime            = 180
+	linkLifeTime            = 180
 	GodUserID               = 1418862576
 	defaultTimeInServiceMod = time.Hour * 24
 )
@@ -31,6 +37,7 @@ func (a *Admin) AdminListCommand(s *model.Situation) error {
 
 	markUp := msgs.NewIlMarkUp(
 		msgs.NewIlRow(msgs.NewIlAdminButton("add_admin_button", "admin/add_admin_msg")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("add_support_button", "admin/add_support_msg")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("delete_admin_button", "admin/delete_admin")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("back_to_admin_settings", "admin/admin_setting")),
 	).Build(a.bot.AdminLibrary[lang])
@@ -59,11 +66,97 @@ func (a *Admin) CheckNewAdmin(s *model.Situation) error {
 	return a.msgs.NewParseMessage(s.User.ID, text)
 }
 
+func (a *Admin) CheckNewSupport(s *model.Situation) error {
+	key := strings.Replace(s.Command, "/start new_support_", "", 1)
+	if _, exist := availableKeys[key]; exist {
+		acs := &access{
+			UserID:        s.Message.From.ID,
+			Code:          "SUPPORT-SHAZAM",
+			Additional:    []string{s.BotLang},
+			UserName:      s.Message.From.UserName,
+			UserFirstName: s.Message.From.FirstName,
+			UserLastName:  s.Message.From.LastName,
+		}
+
+		a.addAccessToAMS(acs)
+
+		text := a.bot.AdminText("ru", "welcome_to_support")
+		delete(availableKeys, key)
+		return a.msgs.NewParseMessage(s.User.ID, text)
+	}
+
+	text := a.bot.LangText(s.User.Language, "invalid_link_err")
+	return a.msgs.NewParseMessage(s.User.ID, text)
+}
+
+type access struct {
+	UserID     int64    `json:"user_id,omitempty"`
+	Code       string   `json:"code,omitempty"`
+	Additional []string `json:"additional,omitempty"`
+
+	UserName      string `json:"user_name,omitempty"`
+	UserFirstName string `json:"user_first_name,omitempty"`
+	UserLastName  string `json:"user_last_name,omitempty"`
+}
+
+func (a *Admin) addAccessToAMS(access *access) {
+	err := addNewAccessToAMS(access)
+	if err != nil {
+		a.msgs.SendNotificationToDeveloper(
+			fmt.Sprintf("%s // %s // error with posting data in AMS:\n%s\nAccess: %s",
+				a.bot.BotLang,
+				a.bot.BotLink,
+				err.Error(),
+				string(accessToBytes(access)),
+			),
+			false,
+		)
+	}
+}
+
+func addNewAccessToAMS(access *access) error {
+	req, err := http.NewRequest("POST", "http://185.250.148.32:9033/v1/accesses/add", bytes.NewBuffer(accessToBytes(access)))
+	if err != nil {
+		return errors.Wrap(err, "failed new http request")
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "failed http request")
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "failed reading http body")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("error_body : " + string(body))
+		return errors.Wrap(err, fmt.Sprintf("Status code %d", resp.StatusCode))
+	}
+
+	return nil
+}
+
+func accessToBytes(access *access) []byte {
+	data, err := json.Marshal(access)
+	if err != nil {
+		panic(err)
+	}
+
+	return data
+}
+
 func (a *Admin) NewAdminToListCommand(s *model.Situation) error {
 	lang := model.AdminLang(s.User.ID)
 
 	link := createNewAdminLink(a.bot.BotLink)
-	text := a.adminFormatText(lang, "new_admin_key_text", link, LinkLifeTime)
+	text := a.adminFormatText(lang, "new_admin_key_text", link, linkLifeTime)
 
 	err := a.msgs.NewParseMessage(s.User.ID, text)
 	if err != nil {
@@ -85,6 +178,32 @@ func createNewAdminLink(botLink string) string {
 	return botLink + "?start=new_admin_" + key
 }
 
+func (a *Admin) AddNewSupportCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
+
+	link := createNewSupportLink(a.bot.BotLink)
+	text := a.adminFormatText(lang, "new_support_key_text", link, linkLifeTime)
+
+	err := a.msgs.NewParseMessage(s.User.ID, text)
+	if err != nil {
+		return err
+	}
+	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
+	s.Command = "/send_admin_list"
+	if err := a.AdminListCommand(s); err != nil {
+		return err
+	}
+
+	return a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "make_a_choice")
+}
+
+func createNewSupportLink(botLink string) string {
+	key := generateKey()
+	availableKeys[key] = key
+	go deleteKey(key)
+	return botLink + "?start=new_support_" + key
+}
+
 func generateKey() string {
 	var key string
 	rs := []rune(AvailableSymbolInKey)
@@ -95,8 +214,8 @@ func generateKey() string {
 }
 
 func deleteKey(key string) {
-	time.Sleep(time.Second * LinkLifeTime)
-	availableKeys[key] = ""
+	time.Sleep(time.Second * linkLifeTime)
+	delete(availableKeys, key)
 }
 
 func (a *Admin) DeleteAdminCommand(s *model.Situation) error {

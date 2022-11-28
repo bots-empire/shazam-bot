@@ -2,10 +2,11 @@ package services
 
 import (
 	"fmt"
+
 	"github.com/bots-empire/base-bot/msgs"
 	"github.com/pkg/errors"
 
-	model "github.com/bots-empire/shazam-bot/internal/model"
+	"github.com/bots-empire/shazam-bot/internal/model"
 )
 
 func (u *Users) TopListPlayers() {
@@ -38,7 +39,7 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 	}
 
 	if len(users) < 3 {
-		u.Msgs.SendNotificationToDeveloper("failed to get users: users count < 3", false)
+		u.Msgs.SendNotificationToDeveloper("failed to get users: users count less then 3", false)
 		return nil
 	}
 

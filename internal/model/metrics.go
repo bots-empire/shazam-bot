@@ -71,4 +71,13 @@ var (
 		},
 		[]string{"bot_name"},
 	)
+
+	ResponseTime = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "response_time",
+			Help:    "Response time of route",
+			Buckets: []float64{0.1, 0.3, 0.5, 0.9, 1, 5, 10},
+		},
+		[]string{"handler", "type", "bot_name"},
+	)
 )

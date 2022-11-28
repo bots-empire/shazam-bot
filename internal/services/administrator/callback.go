@@ -31,6 +31,7 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/set_language", adminSrv.SetNewLangCommand)
 	h.OnCommand("/send_admin_list", adminSrv.AdminListCommand)
 	h.OnCommand("/add_admin_msg", adminSrv.NewAdminToListCommand)
+	h.OnCommand("/add_support_msg", adminSrv.AddNewSupportCommand)
 	h.OnCommand("/delete_admin", adminSrv.DeleteAdminCommand)
 	h.OnCommand("/send_advert_source_menu", adminSrv.AdvertSourceMenuCommand)
 	h.OnCommand("/add_new_source", adminSrv.AddNewSourceCommand)
