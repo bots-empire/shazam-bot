@@ -239,9 +239,17 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 		return
 	}
 
-	if err := u.admin.CheckAdminMessage(situation); err == nil {
+	err := u.admin.CheckAdminMessage(situation)
+	if err == nil {
 		return
 	}
+	text := fmt.Sprintf("%s // %s // error with serve admin message command: %s\ncommand = '%s'",
+		u.bot.BotLang,
+		u.bot.BotLink,
+		err,
+		situation.Command,
+	)
+	u.Msgs.SendNotificationToDeveloper(text, false)
 
 	if maintenanceMode {
 		model.LossUserMessages.WithLabelValues(situation.BotLang).Inc()
