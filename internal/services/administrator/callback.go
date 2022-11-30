@@ -57,12 +57,13 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/send_advertisement", adminSrv.SelectedLangCommand)
 	h.OnCommand("/start_mailing", adminSrv.StartMailingCommand)
 
-	//shazam
+	//Tasks
 	h.OnCommand("/delete_task_with_id", adminSrv.DeleteTaskWithID)
 	h.OnCommand("/add_task", adminSrv.AddTask)
 	h.OnCommand("/get_all_tasks", adminSrv.GetTasks)
 
 	//Referral system command
+	h.OnCommand("/change_rewards_gap", adminSrv.ChangeRewardsGapCommand)
 	h.OnCommand("/check_rewards_ranges", adminSrv.ViewLevelCommand)
 	h.OnCommand("/apply_rewards", adminSrv.ApplyRewardCommand)
 	h.OnCommand("/change_gap", adminSrv.ChangeGapCommand)
