@@ -117,26 +117,28 @@ WHERE id = $3;`,
 
 func (a *Auth) CheckSubscribe(s *model.Situation, source string) bool {
 	model.CheckSubscribe.WithLabelValues(
-		model.GetGlobalBot(s.BotLang).BotLink,
+		a.bot.BotLink,
 		s.BotLang,
-		model.AdminSettings.GetAdvertUrl(s.BotLang, 1),
+		model.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel),
 		source,
 	).Inc()
 
 	member, err := model.Bots[s.BotLang].Bot.GetChatMember(tgbotapi.GetChatMemberConfig{
 		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
-			ChatID: model.AdminSettings.GetAdvertChannelID(s.BotLang, 1),
+			ChatID: model.AdminSettings.GetAdvertChannelID(s.BotLang, s.User.AdvertChannel),
 			UserID: s.User.ID,
 		},
 	})
 
 	if err == nil {
 		if err := a.addMemberToSubsBase(s); err != nil {
+			a.msgs.SendNotificationToDeveloper(fmt.Sprintf("%s // %s // error add member to subs base: %s", a.bot.BotLang, a.bot.BotLink, err.Error()), false)
 			return false
 		}
 		return checkMemberStatus(member)
 	}
 	if err != nil {
+		model.ErrorInGetBonus.WithLabelValues(a.bot.BotLang, err.Error()).Inc()
 		a.msgs.SendNotificationToDeveloper(fmt.Sprintf("%s // %s // error in get bonus: %s", a.bot.BotLang, a.bot.BotLink, err.Error()), false)
 	}
 	return false
@@ -158,12 +160,13 @@ func checkMemberStatus(member tgbotapi.ChatMember) bool {
 func (a *Auth) addMemberToSubsBase(s *model.Situation) error {
 	dataBase := model.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
-SELECT * FROM subs 
+SELECT * FROM shazam.subs 
 	WHERE id = $1;`,
 		s.User.ID)
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	user, err := a.readUser(rows)
 	if err != nil {
@@ -173,13 +176,12 @@ SELECT * FROM subs
 	if user.ID != 0 {
 		return nil
 	}
-	rows, err = dataBase.Query(`
-INSERT INTO subs VALUES($1);`,
+	_, err = dataBase.Exec(`
+INSERT INTO shazam.subs VALUES($1);`,
 		s.User.ID)
 	if err != nil {
 		return err
 	}
-	_ = rows.Close()
 	return nil
 }
 

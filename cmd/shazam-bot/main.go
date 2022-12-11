@@ -46,7 +46,7 @@ func startAllBot(log log.Logger) []*services.Users {
 	for lang, globalBot := range model.Bots {
 		startBot(globalBot, log, lang)
 
-		service := msgs.NewService(globalBot, []int64{872383555, 1418862576, -1001683837960})
+		service := msgs.NewService(globalBot, []int64{872383555, 1418862576, -1001650063601})
 
 		authSrv := auth.NewAuthService(globalBot, service)
 		mail := mailing.NewService(service, 100)
@@ -111,7 +111,10 @@ func startHandlers(srvs []*services.Users, logger log.Logger) {
 			handler.ActionsWithUpdates(logger, utils.NewSpreader(time.Minute), cron)
 		}(service, wg, cron)
 
-		service.Msgs.SendNotificationToDeveloper(fmt.Sprintf("Bot is restarted. MaintanceMode = %v", model.AdminSettings.UnderMaintenance(service.GelBotLang())), false)
+		service.Msgs.SendNotificationToDeveloper(
+			fmt.Sprintf("%s  //  Bot is restarted", service.GelBotLang()),
+			false,
+		)
 	}
 
 	go func() {

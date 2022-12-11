@@ -80,4 +80,13 @@ var (
 		},
 		[]string{"handler", "type", "bot_name"},
 	)
+
+	ErrorInGetBonus = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Subsystem: "bot",
+			Name:      "error_get_bonus",
+			Help:      "Total check subscribe",
+		},
+		[]string{"bot_name", "error"},
+	)
 )
