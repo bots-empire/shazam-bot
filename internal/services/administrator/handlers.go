@@ -270,13 +270,16 @@ func (a *Admin) MediaTask(s *model.Situation) error {
 	case s.Message.Video != nil:
 		fileID = s.Message.Video.FileID
 		voiceLength = s.Message.Video.Duration
+	case s.Message.Audio != nil:
+		fileID = s.Message.Audio.FileID
+		voiceLength = s.Message.Audio.Duration
 	default:
 		return fmt.Errorf("not media msg")
 	}
 
 	err := a.AddTaskToDB(fileID, voiceLength)
 	if err != nil {
-		return errors.Wrap(err, "admin/handlers :")
+		return errors.Wrap(err, "admin/handlers")
 	}
 
 	text := a.bot.AdminText(model.AdminLang(s.User.ID), "operation_completed")

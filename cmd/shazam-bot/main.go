@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -111,10 +110,7 @@ func startHandlers(srvs []*services.Users, logger log.Logger) {
 			handler.ActionsWithUpdates(logger, utils.NewSpreader(time.Minute), cron)
 		}(service, wg, cron)
 
-		service.Msgs.SendNotificationToDeveloper(
-			fmt.Sprintf("%s  //  Bot is restarted", service.GelBotLang()),
-			false,
-		)
+		service.Msgs.SendNotificationToDeveloper("Bot is restarted", false)
 	}
 
 	go func() {

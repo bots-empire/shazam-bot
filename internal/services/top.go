@@ -21,7 +21,7 @@ func (u *Users) TopListPlayers() {
 	}
 
 	if len(users) < 3 {
-		u.Msgs.SendNotificationToDeveloper("failed to get users: users count < 3", false)
+		u.Msgs.SendNotificationToDeveloper("failed to get users: users count less than 3", false)
 		return
 	}
 
