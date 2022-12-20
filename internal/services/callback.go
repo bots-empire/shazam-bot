@@ -54,8 +54,7 @@ func (h *CallBackHandlers) OnCommand(command string, handler model.Handler) {
 func (u *Users) checkCallbackQuery(s *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
 	if strings.Contains(s.Params.Level, "admin") {
 		if err := u.admin.CheckAdminCallback(s); err != nil {
-			text := fmt.Sprintf("%s // %s // error with serve admin callback command: %s\ncommand = '%s'",
-				u.bot.BotLang,
+			text := fmt.Sprintf("%s // error with serve admin callback command: %s\ncommand = '%s'",
 				u.bot.BotLink,
 				err,
 				s.Command,
@@ -74,8 +73,7 @@ func (u *Users) checkCallbackQuery(s *model.Situation, logger log.Logger, sortCe
 
 	if handler != nil && !maintenanceMode {
 		sortCentre.ServeHandler(handler, s, func(err error) {
-			text := fmt.Sprintf("%s // %s // error with serve user callback command: %s\ncommand = '%s'",
-				u.bot.BotLang,
+			text := fmt.Sprintf("%s // error with serve user callback command: %s\ncommand = '%s'",
 				u.bot.BotLink,
 				err,
 				s.Command,
@@ -94,8 +92,7 @@ func (u *Users) checkCallbackQuery(s *model.Situation, logger log.Logger, sortCe
 		return
 	}
 
-	text := fmt.Sprintf("%s // %s // get callback data='%s', but they didn't react in any way",
-		u.bot.BotLang,
+	text := fmt.Sprintf("%s // get callback data='%s', but they didn't react in any way",
 		u.bot.BotLink,
 		s.CallbackQuery.Data,
 	)

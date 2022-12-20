@@ -10,6 +10,8 @@ import (
 )
 
 func (u *Users) TopListPlayers() {
+	defer u.panicCather(nil)
+
 	countOfUsers := u.admin.CountUsers()
 	if countOfUsers > 30 {
 		countOfUsers /= 10
@@ -21,7 +23,7 @@ func (u *Users) TopListPlayers() {
 	}
 
 	if len(users) < 3 {
-		u.Msgs.SendNotificationToDeveloper("failed to get users: users count less than 3", false)
+		//u.Msgs.SendNotificationToDeveloper("failed to get users: users count less than 3", false) its normal keys
 		return
 	}
 
@@ -95,7 +97,7 @@ func (u *Users) createTopForMailing(users []*model.User) error {
 
 	if len(top) < 3 {
 		for i := 0; i <= 3-len(top); i++ {
-			err := u.CreateNilTop(i + 1)
+			err = u.CreateNilTop(i + 1)
 			if err != nil {
 				return errors.Wrap(err, "top for mailing: failed to create nil top")
 			}
@@ -191,15 +193,17 @@ func (u *Users) updateTop3(id int64, i int, balance int) error {
 	}
 
 	if top.UserID != id {
-		err := u.UpdateTop3Players(id, 0, i+1, balance)
+		err = u.UpdateTop3Players(id, 0, i+1, balance)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "update top 3 players, time on top 0")
 		}
-	} else {
-		err := u.UpdateTop3Players(top.UserID, top.TimeOnTop+1, top.Top, balance)
-		if err != nil {
-			return err
-		}
+
+		return nil
+	}
+
+	err = u.UpdateTop3Players(top.UserID, top.TimeOnTop+1, top.Top, balance)
+	if err != nil {
+		return errors.Wrap(err, "update top 3 players, time on top custom")
 	}
 
 	return nil

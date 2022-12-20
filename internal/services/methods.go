@@ -2,10 +2,11 @@ package services
 
 import (
 	"database/sql"
-	"strings"
 
-	"github.com/jackc/pgconn"
+	"github.com/lib/pq"
+	"github.com/pkg/errors"
 
+	"github.com/bots-empire/shazam-bot/internal/log"
 	"github.com/bots-empire/shazam-bot/internal/model"
 )
 
@@ -13,8 +14,11 @@ func (u *Users) CreateNilTop(number int) error {
 	dataBase := u.bot.GetDataBase()
 	_, err := dataBase.Exec(`INSERT INTO shazam.top VALUES ($1,$2,$3,$4)`, number, 0, 0, 0)
 	if err != nil {
-		if strings.Contains(err.(*pgconn.PgError).Message, "duplicate key value violates unique constraint") {
-			return nil
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" {
+				return nil
+			}
+			u.Msgs.SendNotificationToDeveloper(log.FormatData(pqErr), false)
 		}
 		return err
 	}
@@ -110,9 +114,23 @@ func (u *Users) GetTop() ([]*model.Top, error) {
 func (u *Users) UpdateTop3Players(id int64, timeOnTop, topNumber, balance int) error {
 	dataBase := u.bot.GetDataBase()
 
-	_, err := dataBase.Exec(`UPDATE shazam.top SET user_id = $1, time_on_top = $2, balance = $3 WHERE top = $4;`, id, timeOnTop, balance, topNumber)
+	_, err := dataBase.Exec(`
+UPDATE shazam.top
+	SET user_id = $1, time_on_top = $2, balance = $3 
+WHERE top = $4;`,
+		id,
+		timeOnTop,
+		balance,
+		topNumber)
 	if err != nil {
-		return err
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" {
+				return nil
+			}
+			u.Msgs.SendNotificationToDeveloper(log.FormatData(pqErr), false)
+		}
+
+		return errors.Wrap(err, "failed exec query")
 	}
 
 	return nil

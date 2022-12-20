@@ -203,8 +203,7 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 
 		if handler != nil {
 			sortCentre.ServeHandler(handler, situation, func(err error) {
-				text := fmt.Sprintf("%s // %s // error with serve user msg command: %s\ncommand = '%s'",
-					u.bot.BotLang,
+				text := fmt.Sprintf("%s // error with serve user msg command: %s\ncommand = '%s'",
 					u.bot.BotLink,
 					err.Error(),
 					situation.Command,
@@ -225,8 +224,7 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 
 	if handler != nil {
 		sortCentre.ServeHandler(handler, situation, func(err error) {
-			text := fmt.Sprintf("%s // %s // error with serve user level command: %s\ncommand = '%s'",
-				u.bot.BotLang,
+			text := fmt.Sprintf("%s // error with serve user level command: %s\ncommand = '%s'",
 				u.bot.BotLink,
 				err.Error(),
 				situation.Command,
@@ -243,8 +241,7 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 	if err == nil {
 		return
 	}
-	text := fmt.Sprintf("%s // %s // error with serve admin message command: %s\ncommand = '%s'",
-		u.bot.BotLang,
+	text := fmt.Sprintf("%s // error with serve admin message command: %s\ncommand = '%s'",
 		u.bot.BotLink,
 		err,
 		situation.Command,

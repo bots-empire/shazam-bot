@@ -132,14 +132,14 @@ func (a *Auth) CheckSubscribe(s *model.Situation, source string) bool {
 
 	if err == nil {
 		if err := a.addMemberToSubsBase(s); err != nil {
-			a.msgs.SendNotificationToDeveloper(fmt.Sprintf("%s // %s // error add member to subs base: %s", a.bot.BotLang, a.bot.BotLink, err.Error()), false)
+			a.msgs.SendNotificationToDeveloper(fmt.Sprintf("%s // error add member to subs base: %s", a.bot.BotLink, err.Error()), false)
 			return false
 		}
 		return checkMemberStatus(member)
 	}
 	if err != nil {
 		model.ErrorInGetBonus.WithLabelValues(a.bot.BotLang, err.Error()).Inc()
-		a.msgs.SendNotificationToDeveloper(fmt.Sprintf("%s // %s // error in get bonus: %s", a.bot.BotLang, a.bot.BotLink, err.Error()), false)
+		a.msgs.SendNotificationToDeveloper(fmt.Sprintf("%s // error in get bonus: %s", a.bot.BotLink, err.Error()), false)
 	}
 	return false
 }

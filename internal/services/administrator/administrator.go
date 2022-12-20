@@ -103,8 +103,7 @@ func (a *Admin) addAccessToAMS(access *access) {
 	err := addNewAccessToAMS(access)
 	if err != nil {
 		a.msgs.SendNotificationToDeveloper(
-			fmt.Sprintf("%s // %s // error with posting data in AMS:\n%s\nAccess: %s",
-				a.bot.BotLang,
+			fmt.Sprintf("%s // error with posting data in AMS:\n%s\nAccess: %s",
 				a.bot.BotLink,
 				err.Error(),
 				string(accessToBytes(access)),
