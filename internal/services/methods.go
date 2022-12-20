@@ -89,8 +89,19 @@ func (u *Users) GetFromTop(topNumber int) (*model.Top, error) {
 		Top: topNumber,
 	}
 
-	_ = dataBase.QueryRow(`SELECT user_id, time_on_top, balance FROM shazam.top WHERE top = ?;`,
-		topNumber).Scan(&top.UserID, &top.TimeOnTop, &top.Balance)
+	err := dataBase.QueryRow(`
+SELECT user_id, time_on_top, balance 
+	FROM shazam.top
+WHERE top = $1;`,
+		topNumber).
+		Scan(
+			&top.UserID,
+			&top.TimeOnTop,
+			&top.Balance,
+		)
+	if err != nil {
+		return nil, err
+	}
 
 	return top, nil
 }
