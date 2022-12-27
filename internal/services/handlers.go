@@ -536,6 +536,7 @@ func (u *Users) MoreMoneyCommand(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 	text := u.bot.LangText(s.User.Language, "more_money_text",
 		model.AdminSettings.GetParams(s.BotLang).BonusAmount,
+		model.AdminSettings.GetParams(s.BotLang).BonusAmount,
 	)
 
 	markup := msgs.NewIlMarkUp(
