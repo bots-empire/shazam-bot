@@ -30,7 +30,7 @@ func (u *Users) GetUserBalanceFromID(id int64) (int, error) {
 	var balance int
 	dataBase := u.bot.GetDataBase()
 	err := dataBase.QueryRow(`
-SELECT balance FROM shazam.users WHERE id = ?`, id).Scan(&balance)
+SELECT balance FROM shazam.users WHERE id = $1`, id).Scan(&balance)
 	if err != nil {
 		return 0, err
 	}

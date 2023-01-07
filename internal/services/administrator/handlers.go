@@ -67,42 +67,7 @@ func (a *Admin) CheckAdminMessage(s *model.Situation) error {
 		return Handler(s)
 	}
 
-	if a.checkIncomeInfo(s) {
-		return nil
-	}
-
 	return model.ErrCommandNotConverted
-}
-
-func (a *Admin) checkIncomeInfo(s *model.Situation) bool {
-	if s.Message == nil {
-		return false
-	}
-
-	if s.Message.ForwardFrom == nil {
-		return false
-	}
-
-	lang := model.AdminLang(s.User.ID)
-
-	info, err := a.getIncomeInfo(s.Message.ForwardFrom.ID)
-	if err != nil {
-		a.msgs.SendNotificationToDeveloper("some error in get income info: "+err.Error(), false)
-		return true
-	}
-
-	if info == nil {
-		err = a.msgs.NewParseMessage(s.User.ID, a.bot.AdminText(lang, "user_info_not_found"))
-		return true
-	}
-
-	err = a.msgs.NewParseMessage(s.User.ID, a.adminFormatText(lang, "user_income_info", info.UserID, info.Source))
-	if err != nil {
-		a.msgs.SendNotificationToDeveloper("error in send msg: "+err.Error(), false)
-		return true
-	}
-
-	return true
 }
 
 func (a *Admin) RemoveAdminCommand(s *model.Situation) error {

@@ -156,3 +156,7 @@ func (a *Admin) selectedAllLanguage() bool {
 func buttonUnderAdvertisementUnable(botLang string) bool {
 	return model.AdminSettings.GlobalParameters[botLang].Parameters.ButtonUnderAdvert
 }
+
+func topMailingUnable(botLang string) bool {
+	return model.AdminSettings.GlobalParameters[botLang].Parameters.TopMailing
+}

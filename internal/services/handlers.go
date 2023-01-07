@@ -23,7 +23,7 @@ import (
 
 const (
 	updateCounterHeader = "Today Update's counter: %d"
-	updatePrintHeader   = "update number: %d    // voice-bot-update:  %s %s"
+	updatePrintHeader   = "update number: %d    // shazam-bot-update:  %s %s"
 	godUserID           = 1418862576
 
 	defaultTimeInServiceMod = time.Hour * 24
@@ -64,7 +64,7 @@ func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
 
 func (u *Users) ActionsWithUpdates(logger log.Logger, sortCentre *utils.Spreader, cron *gron.Cron) {
 	//start top handler
-	cron.AddFunc(gron.Every(1*xtime.Day).At("15:05"), u.TopListPlayers)
+	cron.AddFunc(gron.Every(1*xtime.Day).At("15:05"), u.TopForMailing)
 
 	for update := range u.bot.Chanel {
 		localUpdate := update
@@ -92,8 +92,14 @@ func (u *Users) checkUpdate(update *tgbotapi.Update, logger log.Logger, sortCent
 		if err == model.ErrNotSelectedLanguage {
 			command = "/select_language"
 		} else if err != nil {
+			text := fmt.Sprintf("%s // err with check user: %s",
+				u.bot.BotLink,
+				err.Error(),
+			)
+			u.Msgs.SendNotificationToDeveloper(text, false)
+
+			logger.Warn(text)
 			u.smthWentWrong(update.Message.Chat.ID, u.bot.BotLang)
-			logger.Warn("err with check user: %s", err.Error())
 			return
 		}
 
@@ -556,10 +562,10 @@ func (u *Users) MaintenanceModeOnCommand(s *model.Situation) error {
 	model.AdminSettings.GlobalParameters[s.BotLang].MaintenanceMode = true
 
 	msg := tgbotapi.NewMessage(s.User.ID, "Режим технического обслуживания включен")
-	go func() {
-		time.Sleep(defaultTimeInServiceMod)
-		_ = u.MaintenanceModeOffCommand(s)
-	}()
+	//go func() {
+	//	time.Sleep(defaultTimeInServiceMod)
+	//	_ = u.MaintenanceModeOffCommand(s)
+	//}()
 	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 

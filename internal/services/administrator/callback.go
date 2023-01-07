@@ -53,8 +53,10 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/change_video_menu", adminSrv.ChangeVideoMenuCommand)
 	h.OnCommand("/turn", adminSrv.TurnMenuCommand)
 	h.OnCommand("/change_advert_button_status", adminSrv.ChangeUnderAdvertButtonCommand)
+	h.OnCommand("/change_top_mailing_status", adminSrv.ChangeTopAdvertButtonCommand)
 	h.OnCommand("/mailing_menu", adminSrv.MailingMenuCommand)
 	h.OnCommand("/send_advertisement", adminSrv.SelectedLangCommand)
+	h.OnCommand("/top_mailing_change", adminSrv.TopMailingMenuCommand)
 	h.OnCommand("/start_mailing", adminSrv.StartMailingCommand)
 
 	//Tasks
@@ -513,11 +515,65 @@ func (a *Admin) ChangeUnderAdvertButtonCommand(s *model.Situation) error {
 	return a.sendMailingMenu(s.BotLang, s.CallbackQuery.From.ID, channel)
 }
 
+func (a *Admin) ChangeTopAdvertButtonCommand(s *model.Situation) error {
+	model.AdminSettings.GlobalParameters[s.BotLang].Parameters.TopMailing =
+		!model.AdminSettings.GlobalParameters[s.BotLang].Parameters.TopMailing
+	model.SaveAdminSettings()
+
+	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "make_a_choice")
+	return a.sendTopMailingMenu(s.BotLang, s.CallbackQuery.From.ID)
+}
+
 func (a *Admin) MailingMenuCommand(s *model.Situation) error {
 	channel := strings.Split(s.CallbackQuery.Data, "?")[1]
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin/mailing")
 	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "make_a_choice")
 	return a.sendMailingMenu(s.BotLang, s.User.ID, channel)
+}
+
+func (a *Admin) TopMailingMenuCommand(s *model.Situation) error {
+	db.RdbSetUser(s.BotLang, s.User.ID, "admin/top_mailing")
+	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "make_a_choice")
+	return a.sendTopMailingMenu(s.BotLang, s.User.ID)
+}
+
+func (a *Admin) sendTopMailingMenu(botLang string, userID int64) error {
+	lang := model.AdminLang(userID)
+
+	text := a.bot.AdminText(lang, "mailing_top_text")
+	markUp := createTopMailingMarkUp(botLang, a.bot.AdminLibrary[lang])
+
+	if db.RdbGetAdminMsgID(botLang, userID) == 0 {
+		msgID, err := a.msgs.NewIDParseMarkUpMessage(userID, &markUp, text)
+		if err != nil {
+			return err
+		}
+
+		db.RdbSetAdminMsgID(botLang, userID, msgID)
+		return nil
+	}
+
+	return a.msgs.NewEditMarkUpMessage(userID, db.RdbGetAdminMsgID(botLang, userID), &markUp, text)
+}
+
+func createTopMailingMarkUp(botLang string, texts map[string]string) tgbotapi.InlineKeyboardMarkup {
+	markUp := &msgs.InlineMarkUp{}
+
+	if topMailingUnable(botLang) {
+		markUp.Rows = append(markUp.Rows,
+			msgs.NewIlRow(msgs.NewIlAdminButton("top_mailing_button_on", "admin/change_top_mailing_status")),
+		)
+	} else {
+		markUp.Rows = append(markUp.Rows,
+			msgs.NewIlRow(msgs.NewIlAdminButton("top_mailing_button_off", "admin/change_top_mailing_status")),
+		)
+	}
+
+	markUp.Rows = append(markUp.Rows,
+		msgs.NewIlRow(msgs.NewIlAdminButton("back_to_chan_menu", "admin/advertisement")),
+	)
+
+	return markUp.Build(texts)
 }
 
 func (a *Admin) promptForInput(userID int64, key string, values ...interface{}) error {

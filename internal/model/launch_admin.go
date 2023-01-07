@@ -49,6 +49,7 @@ type Params struct {
 	ReferralReward      RewardsMatrix `json:"referral_reward,omitempty"`
 
 	ButtonUnderAdvert bool `json:"button_under_advert,omitempty"`
+	TopMailing        bool `json:"top_mailing,omitempty"`
 
 	Currency string `json:"currency,omitempty"`
 

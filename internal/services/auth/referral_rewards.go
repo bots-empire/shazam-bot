@@ -18,10 +18,10 @@ func (a *Auth) referralRewardSystem(botLang string, userID int64, lvl int) error
 	refByLvl = increaseReferralOnLvl(refByLvl, lvl)
 
 	_, err = a.bot.GetDataBase().Exec(`
-UPDATE users SET
-	balance = balance + ?,
-	all_referrals = ?
-WHERE id = ?;`,
+UPDATE shazam.users SET
+	balance = balance + $1,
+	all_referrals = $2
+WHERE id = $3;`,
 		model.AdminSettings.GetParams(botLang).ReferralReward.GetReward(lvl, refByLvl[lvl-1]),
 		refByLvlToString(refByLvl),
 		userID)
@@ -32,7 +32,7 @@ WHERE id = ?;`,
 	rows, err := a.bot.GetDataBase().Query(`
 SELECT father_id 
 	FROM users 
-WHERE id = ?`,
+WHERE id = $1`,
 		userID)
 	if err != nil {
 		return err

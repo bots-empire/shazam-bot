@@ -92,6 +92,14 @@ func (a *Auth) addNewUser(user *model.User, botLang string, referralID int64) er
 	if referralID == 0 {
 		return nil
 	}
+	_, err = a.bot.GetDataBase().Exec(`
+UPDATE shazam.users SET
+	referral_count = referral_count + 1
+WHERE id = $1;`,
+		referralID)
+	if err != nil {
+		return err
+	}
 
 	return a.referralRewardSystem(botLang, referralID, 1)
 }
