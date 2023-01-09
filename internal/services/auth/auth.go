@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	getUsersUserQuery = "SELECT * FROM shazam.users WHERE id = $1;"
+	getUsersUserQuery = `SELECT id, balance, completed, completed_today, last_shazam, father_id, all_referrals, advert_channel, referral_count, take_bonus, lang, status FROM shazam.users WHERE id = $1;`
 )
 
 func (a *Auth) CheckingTheUser(message *tgbotapi.Message) (*model.User, error) {
@@ -73,12 +73,26 @@ func (a *Auth) addNewUser(user *model.User, botLang string, referralID int64) er
 		referralID = 0
 	}
 
-	rows, err := a.bot.GetDataBase().Query("INSERT INTO shazam.users VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);",
+	rows, err := a.bot.GetDataBase().Query(`
+INSERT INTO shazam.users (id,
+    balance,
+    completed,
+    completed_today,
+    last_shazam,
+    father_id,
+    all_referrals,
+    advert_channel,
+    referral_count,
+    take_bonus,
+    lang,
+    status) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);`,
 		user.ID,
 		user.Balance,
 		user.Completed,
 		user.CompletedToday,
 		user.LastShazam,
+		user.FatherID,
+		user.AllReferrals,
 		user.AdvertChannel,
 		user.ReferralCount,
 		user.TakeBonus,
@@ -192,6 +206,8 @@ func (a *Auth) ReadUsers(rows *sql.Rows) ([]*model.User, error) {
 			&user.Completed,
 			&user.CompletedToday,
 			&user.LastShazam,
+			&user.FatherID,
+			&user.AllReferrals,
 			&user.AdvertChannel,
 			&user.ReferralCount,
 			&user.TakeBonus,
